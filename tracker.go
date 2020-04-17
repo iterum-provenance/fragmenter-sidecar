@@ -1,10 +1,9 @@
 package main
 
 import (
-	"log"
-
 	"github.com/iterum-provenance/sidecar/data"
 	"github.com/iterum-provenance/sidecar/transmit"
+	"github.com/prometheus/common/log"
 )
 
 // Upload is a struct mapping an idv file name/path
@@ -78,9 +77,15 @@ func (t Tracker) ToRemoteFragmentDesc(fragment filelist) data.RemoteFragmentDesc
 // On upload it checks whether a fragment was completed, if so it's pushed to the MQ publisher
 // On fragment it checks whether all its files were already uploaded, if so, it's pushed to the MQ publisher
 func (t Tracker) StartBlocking() {
-	for {
+	defer close(t.Completed)
+	for t.Uploaded != nil || t.Fragmented != nil {
 		select {
-		case upload := <-t.Uploaded: // On file uploaded to minio
+		case upload, ok := <-t.Uploaded: // On file uploaded to minio
+			if !ok {
+				log.Infoln("Uploaded all files")
+				t.Uploaded = nil
+				break
+			}
 			if _, ok := t.uploads[upload.File]; ok {
 				log.Fatalf("Multiple files with same destination detected: '%v'\n", upload.File)
 			}
@@ -93,7 +98,15 @@ func (t Tracker) StartBlocking() {
 					t.Completed <- &fragmentDesc
 				}
 			}
-		case fragmentptr := <-t.Fragmented: // On fragment returned from fragmenter
+			if len(t.uploads) == len(t.Files) {
+				close(t.Uploaded)
+			}
+		case fragmentptr, ok := <-t.Fragmented: // On fragment returned from fragmenter
+			if !ok {
+				log.Infoln("Fragmented all files")
+				t.Fragmented = nil
+				break
+			}
 			fragment := *fragmentptr.(*filelist)
 			// Add this fragment to the list of fragments of each file
 			for _, file := range fragment {

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"runtime"
+	"time"
 
 	"github.com/iterum-provenance/fragmenter/daemon"
 	"github.com/iterum-provenance/fragmenter/env"
@@ -15,7 +17,7 @@ import (
 func main() {
 	// Initiate pipe to fragmenter channels
 	fragmenterBufferSize := 10
-	toFragmenterChannel := make(chan transmit.Serializable, fragmenterBufferSize)
+	toFragmenterChannel := make(chan transmit.Serializable, 1)
 	fromFragmenterChannel := make(chan transmit.Serializable, fragmenterBufferSize)
 	toFragmenterSocket := "./build/tf.sock"
 	fromFragmenterSocket := "./build/ff.sock"
@@ -57,5 +59,9 @@ func main() {
 	util.Ensure(err, "MessageQueue sender succesfully created and listening")
 	mqSender.Start()
 
-	runtime.Goexit()
+	for runtime.NumGoroutine() > 1 {
+		fmt.Printf("Active Goroutines: %v\n", runtime.NumGoroutine())
+		time.Sleep(2 * time.Second)
+	}
+
 }
