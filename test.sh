@@ -22,6 +22,6 @@ export ENC_FRAGMENT_SIZE_LENGTH=4
 
 
 make build
-fragmenter-sidecar &
+fragmenter-sidecar
 
-python ./fragmenter/main.py
+# python ./fragmenter/main.py

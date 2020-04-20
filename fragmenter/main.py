@@ -35,8 +35,8 @@ def from_sidecar() -> str:
                 fragment = decode_fragment_desc(sidecar_input)
                 received_one = True
                 yield fragment
-        except Exception as err:
-            print(f"Exception: {err}, retrying from_sidecar connection in 5 seconds...", flush=True)
+        except Exception:
+            print(f"Couldn't reach sidecar, retrying in 5 seconds...", flush=True)
             time.sleep(5)
         finally: 
             # Clean up before trying again. Letting the other side know we quit this connection
@@ -65,7 +65,7 @@ def to_sidecar() -> None:
                 print(f"Error: '{err}'", flush=True)
                 exit(os.EX_SOFTWARE)
             else:
-                print(f"Exception: '{err}', creating connection failed, retrying in 5 seconds...", flush=True)
+                print(f"Couldn't reach sidecar, retrying in 5 seconds...", flush=True)
                 time.sleep(5)
         finally:
             to_sidecar_socket.shutdown(SHUT_RDWR)
