@@ -5,10 +5,9 @@ go 1.14
 require (
 	github.com/go-ini/ini v1.55.0 // indirect
 	github.com/iterum-provenance/cli v0.1.0
-	github.com/iterum-provenance/sidecar v0.1.3
+	github.com/iterum-provenance/sidecar v0.1.5
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/prometheus/common v0.9.1
 	github.com/smartystreets/goconvey v1.6.4 // indirect
-	google.golang.org/appengine v1.1.0
 	gopkg.in/ini.v1 v1.55.0 // indirect
 )

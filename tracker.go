@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/iterum-provenance/sidecar/data"
 	"github.com/iterum-provenance/sidecar/transmit"
 	"github.com/prometheus/common/log"
@@ -46,7 +48,6 @@ func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmi
 	for _, file := range tracker.Files {
 		tracker.fragments[file] = []filelist{}
 	}
-
 	return tracker
 }
 
@@ -125,6 +126,10 @@ func (t Tracker) StartBlocking() {
 }
 
 // Start is an asyncrhonous alternative to StartBlocking by spawning a goroutine
-func (t Tracker) Start() {
-	go t.StartBlocking()
+func (t Tracker) Start(wg *sync.WaitGroup) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		t.StartBlocking()
+	}()
 }

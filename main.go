@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"runtime"
-	"time"
+	"sync"
 
 	"github.com/iterum-provenance/fragmenter/daemon"
 	"github.com/iterum-provenance/fragmenter/env"
@@ -15,18 +13,20 @@ import (
 )
 
 func main() {
+	var wg sync.WaitGroup
+
 	// Initiate pipe to fragmenter channels
 	fragmenterBufferSize := 10
 	toFragmenterChannel := make(chan transmit.Serializable, 1)
 	fromFragmenterChannel := make(chan transmit.Serializable, fragmenterBufferSize)
-	toFragmenterSocket := "./build/tf.sock"
-	fromFragmenterSocket := "./build/ff.sock"
+	toFragmenterSocket := env.FragmenterInputSocket
+	fromFragmenterSocket := env.FragmenterOutputSocket
 
 	// Start pipe to fragmenter
 	pipe := socket.NewPipe(fromFragmenterSocket, toFragmenterSocket,
 		fromFragmenterChannel, toFragmenterChannel,
 		receiverHandler, senderHandler)
-	pipe.Start()
+	pipe.Start(&wg)
 
 	// Define and connect to minio storage and configure for remote Daemon
 	daemonConfig := daemon.NewDaemonConfigFromEnv()
@@ -50,18 +50,14 @@ func main() {
 
 	// Start downloading files from daemon and upload them to minio
 	dataMover := NewDataMover(minioConfig, daemonConfig, files, uploaded)
-	dataMover.Start()
+	dataMover.Start(&wg)
 
 	tracker := NewTracker(uploaded, fromFragmenterChannel, toMQChannel, files)
-	tracker.Start()
+	tracker.Start(&wg)
 
 	mqSender, err := messageq.NewSender(toMQChannel, env.MQBrokerURL, env.MQOutputQueue)
 	util.Ensure(err, "MessageQueue sender succesfully created and listening")
-	mqSender.Start()
+	mqSender.Start(&wg)
 
-	for runtime.NumGoroutine() > 1 {
-		fmt.Printf("Active Goroutines: %v\n", runtime.NumGoroutine())
-		time.Sleep(2 * time.Second)
-	}
-
+	wg.Wait()
 }

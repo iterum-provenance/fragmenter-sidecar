@@ -31,3 +31,9 @@ var MQBrokerURL = os.Getenv("MQ_BROKER_URL")
 
 // MQOutputQueue is the queue into which we push the remote fragment descriptions
 var MQOutputQueue = os.Getenv("MQ_OUTPUT_QUEUE")
+
+// FragmenterInputSocket is the path to the socket used for fragmenter input
+var FragmenterInputSocket = os.Getenv("FRAGMENTER_INPUT")
+
+// FragmenterOutputSocket is the path to the socket used for fragmenter output
+var FragmenterOutputSocket = os.Getenv("FRAGMENTER_OUTPUT")

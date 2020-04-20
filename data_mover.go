@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sync"
 
 	"github.com/iterum-provenance/fragmenter/daemon"
 	"github.com/iterum-provenance/fragmenter/minio"
@@ -22,8 +23,11 @@ func NewDataMover(mc minio.Config, dc daemon.Config, files filelist, completed c
 
 // StartBlocking starts the process of pulling files from the daemon and storing them in minio
 func (dm DataMover) StartBlocking() {
+	var wg sync.WaitGroup
 	for _, file := range dm.Files {
+		wg.Add(1)
 		go func(fileName string) {
+			defer wg.Done()
 			remoteFile, err := pullAndUploadFile(dm.MinioConfig, dm.DaemonConfig, fileName, 5)
 			if err != nil {
 				log.Fatalln(err)
@@ -31,9 +35,14 @@ func (dm DataMover) StartBlocking() {
 			dm.Completed <- Upload{fileName, remoteFile}
 		}(file)
 	}
+	wg.Wait()
 }
 
 // Start is an asyncrhonous alternative to StartBlocking spawning a goroutine
-func (dm DataMover) Start() {
-	go dm.StartBlocking()
+func (dm DataMover) Start(wg *sync.WaitGroup) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		dm.StartBlocking()
+	}()
 }
