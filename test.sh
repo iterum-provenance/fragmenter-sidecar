@@ -1,6 +1,5 @@
 #bin/bash
 
-
 # Used by fragmenter-sidecar
 export DAEMON_URL=http://localhost:3000
 export DAEMON_DATASET=test_dataset
@@ -24,4 +23,5 @@ export ENC_FRAGMENT_SIZE_LENGTH=4
 make build
 fragmenter-sidecar
 
+# run this in a separate terminal
 # python ./fragmenter/main.py
