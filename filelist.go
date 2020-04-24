@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 
-	"github.com/iterum-provenance/sidecar/transmit"
+	"github.com/iterum-provenance/iterum-go/transmit"
 )
 
 type filelist []string

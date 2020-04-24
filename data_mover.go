@@ -4,8 +4,9 @@ import (
 	"log"
 	"sync"
 
+	"github.com/iterum-provenance/iterum-go/minio"
+
 	"github.com/iterum-provenance/fragmenter/daemon"
-	"github.com/iterum-provenance/fragmenter/minio"
 )
 
 // DataMover is the structure responsible for pulling data from the daemon and into minio

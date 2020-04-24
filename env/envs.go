@@ -1,39 +1,44 @@
 package env
 
-import "os"
+import (
+	"log"
+	"os"
+	"strings"
 
-// DaemonURL is the remote url at which an idv daemon can be contacted
-var DaemonURL = os.Getenv("DAEMON_URL")
+	"github.com/iterum-provenance/iterum-go/env"
+	"github.com/iterum-provenance/iterum-go/util"
+)
 
-// DaemonDataset is the name of the dataset used by this pipeline run
-var DaemonDataset = os.Getenv("DAEMON_DATASET")
-
-// DaemonCommitHash is the hash of the commit used for this pipeline run
-var DaemonCommitHash = os.Getenv("DAEMON_COMMIT")
-
-// MinioURL is the url at which the minio client can be reached
-var MinioURL = os.Getenv("MINIO_URL")
-
-// MinioAccessKey is the access key for minio
-var MinioAccessKey = os.Getenv("MINIO_ACCESS_KEY")
-
-// MinioSecretKey is the secret access key for minio
-var MinioSecretKey = os.Getenv("MINIO_SECRET_KEY")
-
-// MinioUseSSL is a string val denoting whether minio client uses SSL
-var MinioUseSSL = os.Getenv("MINIO_USE_SSL")
-
-// MinioTargetBucket is the bucket to which storage should go
-var MinioTargetBucket = os.Getenv("MINIO_OUTPUT_BUCKET")
-
-// MQBrokerURL is the url at which we can reach the message queueing system
-var MQBrokerURL = os.Getenv("MQ_BROKER_URL")
-
-// MQOutputQueue is the queue into which we push the remote fragment descriptions
-var MQOutputQueue = os.Getenv("MQ_OUTPUT_QUEUE")
+const (
+	inputSocketEnv  = "FRAGMENTER_INPUT"
+	outputSocketEnv = "FRAGMENTER_OUTPUT"
+)
 
 // FragmenterInputSocket is the path to the socket used for fragmenter input
-var FragmenterInputSocket = os.Getenv("FRAGMENTER_INPUT")
+var FragmenterInputSocket = env.DataVolumePath + "/" + os.Getenv(inputSocketEnv)
 
 // FragmenterOutputSocket is the path to the socket used for fragmenter output
-var FragmenterOutputSocket = os.Getenv("FRAGMENTER_OUTPUT")
+var FragmenterOutputSocket = env.DataVolumePath + "/" + os.Getenv(outputSocketEnv)
+
+// VerifyFragmenterSidecarEnvs checks whether each of the environment variables returned a non-empty value
+func VerifyFragmenterSidecarEnvs() error {
+	if !strings.HasSuffix(FragmenterInputSocket, ".sock") {
+		return env.ErrEnvironment(inputSocketEnv, FragmenterInputSocket)
+	} else if !strings.HasSuffix(FragmenterOutputSocket, ".sock") {
+		return env.ErrEnvironment(outputSocketEnv, FragmenterOutputSocket)
+	}
+	return nil
+}
+
+func init() {
+	errIterum := env.VerifyIterumEnvs()
+	errDaemon := env.VerifyDaemonEnvs()
+	errMinio := env.VerifyMinioEnvs()
+	errMessageq := env.VerifyMessageQueueEnvs()
+	errSidecar := VerifyFragmenterSidecarEnvs()
+
+	err := util.ReturnFirstErr(errIterum, errMinio, errMessageq, errDaemon, errSidecar)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}

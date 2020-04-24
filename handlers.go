@@ -3,9 +3,10 @@ package main
 import (
 	"net"
 
-	"github.com/iterum-provenance/sidecar/data"
+	desc "github.com/iterum-provenance/iterum-go/descriptors"
+
 	"github.com/iterum-provenance/sidecar/socket"
-	"github.com/iterum-provenance/sidecar/transmit"
+	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/prometheus/common/log"
 )
 
@@ -28,7 +29,7 @@ func senderHandler(socket socket.Socket, conn net.Conn) {
 
 	// Wait for the list of files to come off the queue.
 	msg := <-socket.Channel
-	kill := data.NewKillMessage()
+	kill := desc.NewKillMessage()
 
 	// Send the msgs over the connection
 	err := transmit.EncodeSend(conn, msg)
@@ -69,7 +70,7 @@ func receiverHandler(socket socket.Socket, conn net.Conn) {
 			continue
 		}
 
-		kill := data.KillMessage{}
+		kill := desc.KillMessage{}
 		errKill := kill.Deserialize(encMsg)
 		if errKill != nil {
 			log.Fatalf("Could not decode message due to '%v'", errKill)

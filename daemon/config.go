@@ -1,6 +1,6 @@
 package daemon
 
-import "github.com/iterum-provenance/fragmenter/env"
+import "github.com/iterum-provenance/iterum-go/env"
 
 // Config is a structure holding necessary info for interaction with an idv daemon
 type Config struct {

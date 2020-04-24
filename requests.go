@@ -7,15 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
-	"time"
+
+	desc "github.com/iterum-provenance/iterum-go/descriptors"
+	"github.com/iterum-provenance/iterum-go/minio"
+	"github.com/iterum-provenance/iterum-go/util"
 
 	"github.com/iterum-provenance/cli/idv"
-	"github.com/iterum-provenance/sidecar/data"
-	"github.com/prometheus/common/log"
 
 	"github.com/iterum-provenance/fragmenter/daemon"
-	"github.com/iterum-provenance/fragmenter/minio"
-	"github.com/iterum-provenance/fragmenter/util"
 )
 
 var (
@@ -28,11 +27,11 @@ func _get(url string, target interface{}) (err error) {
 	defer util.ReturnErrOnPanic(&err)()
 
 	resp, err := http.Get(url)
-	util.PanicOnErr(err)
+	util.PanicIfErr(err, "")
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	util.PanicOnErr(err)
+	util.PanicIfErr(err, "")
 
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -44,7 +43,7 @@ func _get(url string, target interface{}) (err error) {
 	}
 
 	err = json.Unmarshal([]byte(body), target)
-	util.PanicOnErr(err)
+	util.PanicIfErr(err, "")
 
 	return
 }
@@ -56,7 +55,7 @@ func getCommitFiles(config daemon.Config) (files filelist, err error) {
 	return filelist(commit.Files), err
 }
 
-func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string, retries int) (remoteFile data.RemoteFileDesc, err error) {
+func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string, retries int) (remoteFile desc.RemoteFileDesc, err error) {
 	defer util.ReturnErrOnPanic(&err)()
 	if !minio.IsConnected() {
 		return remoteFile, fmt.Errorf("Minio client not initialized, cannot pull and send data")
@@ -64,34 +63,12 @@ func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string
 
 	// Get the data
 	resp, err := http.Get(daemon.DaemonURL + "/" + daemon.Dataset + "/file/" + filePath)
-	util.PanicOnErr(err)
-	defer resp.Body.Close()
+	util.PanicIfErr(err, "")
 
-	// Check to see if we already own this bucket
-	exists, errBucketExists := minio.Client.BucketExists(minio.TargetBucket)
-	if errBucketExists != nil {
-		return remoteFile, fmt.Errorf("Upload failed due to failure of bucket existence checking: '%v'", errBucketExists)
-	} else if !exists {
-		log.Infof("Bucket '%v' does not exist, creating...\n", minio.TargetBucket)
-		errMakeBucket := minio.Client.MakeBucket(minio.TargetBucket, "")
-		if errMakeBucket != nil {
-			if retries > 0 { // retry a number of times
-				time.Sleep(1 * time.Second)
-				log.Infof("Failed to create bucket '%v', retrying pullAndUpload...\n", minio.TargetBucket)
-				return pullAndUploadFile(minio, daemon, filePath, retries-1)
-			}
-			return remoteFile, fmt.Errorf("Failed to create bucket '%v' due to: '%v'", minio.TargetBucket, errMakeBucket)
-		}
+	localFile := desc.LocalFileDesc{
+		Name:      filepath.Dir(filePath),
+		LocalPath: filePath,
 	}
 
-	_, err = minio.Client.PutObject(minio.TargetBucket, filePath, resp.Body, resp.ContentLength, minio.PutOptions)
-	util.PanicOnErr(err)
-
-	remoteFile = data.RemoteFileDesc{
-		Name:       filepath.Dir(filePath),
-		RemotePath: filePath,
-		Bucket:     minio.TargetBucket,
-	}
-
-	return remoteFile, err
+	return minio.PutFileFromReader(resp.Body, localFile)
 }

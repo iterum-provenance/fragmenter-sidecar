@@ -3,13 +3,15 @@ package main
 import (
 	"sync"
 
+	envcomm "github.com/iterum-provenance/iterum-go/env"
+	"github.com/iterum-provenance/iterum-go/minio"
+	"github.com/iterum-provenance/iterum-go/util"
+
 	"github.com/iterum-provenance/fragmenter/daemon"
 	"github.com/iterum-provenance/fragmenter/env"
-	"github.com/iterum-provenance/fragmenter/minio"
-	"github.com/iterum-provenance/fragmenter/util"
+	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/sidecar/messageq"
 	"github.com/iterum-provenance/sidecar/socket"
-	"github.com/iterum-provenance/sidecar/transmit"
 )
 
 func main() {
@@ -31,13 +33,13 @@ func main() {
 	// Define and connect to minio storage and configure for remote Daemon
 	daemonConfig := daemon.NewDaemonConfigFromEnv()
 	minioConfig, err := minio.NewMinioConfigFromEnv()
-	util.PanicOnErr(err)
+	util.PanicIfErr(err, "")
 	err = minioConfig.Connect()
-	util.PanicOnErr(err)
+	util.PanicIfErr(err, "")
 
 	// Get the target commit
 	files, err := getCommitFiles(daemonConfig)
-	util.PanicOnErr(err)
+	util.PanicIfErr(err, "")
 
 	// Send the file list to the fragmenter
 	pipe.ToTarget <- &files
@@ -55,7 +57,7 @@ func main() {
 	tracker := NewTracker(uploaded, fromFragmenterChannel, toMQChannel, files)
 	tracker.Start(&wg)
 
-	mqSender, err := messageq.NewSender(toMQChannel, env.MQBrokerURL, env.MQOutputQueue)
+	mqSender, err := messageq.NewSender(toMQChannel, envcomm.MQBrokerURL, envcomm.MQOutputQueue)
 	util.Ensure(err, "MessageQueue sender succesfully created and listening")
 	mqSender.Start(&wg)
 

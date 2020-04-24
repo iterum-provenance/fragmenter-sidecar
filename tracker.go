@@ -3,21 +3,22 @@ package main
 import (
 	"sync"
 
-	"github.com/iterum-provenance/sidecar/data"
-	"github.com/iterum-provenance/sidecar/transmit"
 	"github.com/prometheus/common/log"
+
+	desc "github.com/iterum-provenance/iterum-go/descriptors"
+	"github.com/iterum-provenance/iterum-go/transmit"
 )
 
 // Upload is a struct mapping an idv file name/path
 // to a remote file description as it is stored in minio
 type Upload struct {
 	File     string
-	FileDesc data.RemoteFileDesc
+	FileDesc desc.RemoteFileDesc
 }
 
 // UploadMap maps files to their remote file description
 // If a file is in here it means it was uploaded to minio
-type UploadMap map[string]data.RemoteFileDesc
+type UploadMap map[string]desc.RemoteFileDesc
 
 // FragmentMap maps files to a list of fragmenter-sidecar internal fragments (a list of files)
 // Meaning that an idv file name/path maps to a list of fragments its used in
@@ -28,7 +29,7 @@ type Tracker struct {
 	Files      filelist
 	Uploaded   chan Upload
 	Fragmented chan transmit.Serializable // filelist
-	Completed  chan transmit.Serializable // data.RemoteFragmentDesc
+	Completed  chan transmit.Serializable // desc.RemoteFragmentDesc
 	fragments  FragmentMap
 	uploads    UploadMap
 }
@@ -63,8 +64,8 @@ func (t Tracker) IsUploaded(fragment filelist) bool {
 
 // ToRemoteFragmentDesc transforms a fully uploaded list of files into a RemoteFragmentDesc
 // This can be posted on the MQPublisher. It does a fatal log if any of the files is not yet uploaded
-func (t Tracker) ToRemoteFragmentDesc(fragment filelist) data.RemoteFragmentDesc {
-	fragmentDesc := data.RemoteFragmentDesc{}
+func (t Tracker) ToRemoteFragmentDesc(fragment filelist) desc.RemoteFragmentDesc {
+	fragmentDesc := desc.RemoteFragmentDesc{}
 	for _, file := range fragment {
 		if _, ok := t.uploads[file]; !ok {
 			log.Fatalf("Error: cannot convert non-uploaded fragment into RemoteFragmentDesc. missing file: '%v'\n", file)
