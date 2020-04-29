@@ -25,18 +25,30 @@ func NewDataMover(mc minio.Config, dc daemon.Config, files filelist, completed c
 // StartBlocking starts the process of pulling files from the daemon and storing them in minio
 func (dm DataMover) StartBlocking() {
 	var wg sync.WaitGroup
-	for _, file := range dm.Files {
+	numWorkers := 10
+
+	filesToUploadChannel := make(chan string, len(dm.Files))
+
+	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
-		go func(fileName string) {
+		go func(filesToUpload <-chan string, completions chan<- Upload) {
 			defer wg.Done()
-			remoteFile, err := pullAndUploadFile(dm.MinioConfig, dm.DaemonConfig, fileName, 5)
-			if err != nil {
-				log.Fatalln(err)
+			for fileName := range filesToUpload {
+				remoteFile, err := pullAndUploadFile(dm.MinioConfig, dm.DaemonConfig, fileName, 5)
+				if err != nil {
+					log.Fatalln(err)
+				}
+				completions <- Upload{fileName, remoteFile}
 			}
-			dm.Completed <- Upload{fileName, remoteFile}
-		}(file)
+		}(filesToUploadChannel, dm.Completed)
 	}
+
+	for _, file := range dm.Files {
+		filesToUploadChannel <- file
+	}
+
 	wg.Wait()
+	close(filesToUploadChannel)
 }
 
 // Start is an asyncrhonous alternative to StartBlocking spawning a goroutine
