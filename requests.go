@@ -48,7 +48,8 @@ func _get(url string, target interface{}) (err error) {
 	return
 }
 
-// getCommitFiles pulls a specific commmit based on its hash and dataset and passed daemonURL and returns a list of files
+// getCommitFiles pulls a specific commmit based on its hash and dataset and passed daemonURL
+// it returns the list of files associated with this commmit
 func getCommitFiles(config daemon.Config) (files filelist, err error) {
 	commit := idv.Commit{}
 	err = _get(config.DaemonURL+"/"+config.Dataset+"/commit/"+config.CommitHash, &commit)
