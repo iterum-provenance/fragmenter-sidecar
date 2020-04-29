@@ -62,8 +62,8 @@ github.com/iterum-provenance/cli v0.1.1/go.mod h1:otAw5Nhg4XBW5zWbf/Kklgu4MINtNQ
 github.com/iterum-provenance/iterum-go v0.0.2/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
 github.com/iterum-provenance/iterum-go v0.0.5 h1:4B6N/VKR0qERqTQSDV7bJioNcc0wcmcJABAYRigpPQI=
 github.com/iterum-provenance/iterum-go v0.0.5/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
-github.com/iterum-provenance/sidecar v0.1.9 h1:9it/G4LlkRDaVYPY6RpMCJbkbUyU6/loNPKFrX4K3jE=
-github.com/iterum-provenance/sidecar v0.1.9/go.mod h1:WSUa5WOuw/i1bB64pYedUYacJLIHBWPM0QUXAkply00=
+github.com/iterum-provenance/sidecar v0.1.9 h1:CEZ1zhPeknx003TOjBM+ydK/xoPuafjOSJRrKmfgTUM=
+github.com/iterum-provenance/sidecar v0.1.9/go.mod h1:ieR/MzrCdYGmnTih45zxPm4mXTYt7S8uaJbG87nfhgQ=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
 github.com/jtolds/gls v4.20.0+incompatible h1:xdiiI2gbIgH/gLH7ADydsJ1uDOEzR8yvV7C0MuV77Wo=
