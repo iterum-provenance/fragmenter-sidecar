@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/iterum-provenance/iterum-go/minio"
 
@@ -39,6 +40,7 @@ func (dm DataMover) StartBlocking() {
 					log.Fatalln(err)
 				}
 				completions <- Upload{fileName, remoteFile}
+				time.Sleep(1000 * time.Microsecond)
 			}
 		}(filesToUploadChannel, dm.Completed)
 	}

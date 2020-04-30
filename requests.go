@@ -71,5 +71,5 @@ func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string
 		LocalPath: filePath,
 	}
 
-	return minio.PutFileFromReader(resp.Body, localFile)
+	return minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
 }
