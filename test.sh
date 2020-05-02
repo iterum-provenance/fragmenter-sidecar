@@ -1,6 +1,6 @@
 
 export ITERUM_NAME="fragmenter-sidecar"
-export DATA_VOLUME_PATH="./build/"
+export DATA_VOLUME_PATH="/tmp/"
 export PIPELINE_HASH="asdh37dHsf8H3fSSd24HEe35g2d4h754"
 
 export DAEMON_URL="http://localhost:3000"

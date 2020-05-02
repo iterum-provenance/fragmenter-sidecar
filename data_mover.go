@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"sync"
-	"time"
 
 	"github.com/iterum-provenance/iterum-go/minio"
 
@@ -40,7 +39,6 @@ func (dm DataMover) StartBlocking() {
 					log.Fatalln(err)
 				}
 				completions <- Upload{fileName, remoteFile}
-				time.Sleep(1000 * time.Microsecond)
 			}
 		}(filesToUploadChannel, dm.Completed)
 	}
@@ -48,9 +46,9 @@ func (dm DataMover) StartBlocking() {
 	for _, file := range dm.Files {
 		filesToUploadChannel <- file
 	}
+	close(filesToUploadChannel)
 
 	wg.Wait()
-	close(filesToUploadChannel)
 }
 
 // Start is an asyncrhonous alternative to StartBlocking spawning a goroutine

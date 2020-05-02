@@ -4,9 +4,10 @@ import (
 	"net"
 
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
+	"github.com/iterum-provenance/iterum-go/util"
 
-	"github.com/iterum-provenance/sidecar/socket"
 	"github.com/iterum-provenance/iterum-go/transmit"
+	"github.com/iterum-provenance/sidecar/socket"
 	"github.com/prometheus/common/log"
 )
 
@@ -63,17 +64,21 @@ func receiverHandler(socket socket.Socket, conn net.Conn) {
 			return
 		}
 
+		// If it is a fragment filelist
 		fragment := filelist{}
 		errFragment := fragment.Deserialize(encMsg)
+
 		if errFragment == nil {
 			socket.Channel <- &fragment
 			continue
 		}
 
+		// If it is a kill_message
 		kill := desc.KillMessage{}
 		errKill := kill.Deserialize(encMsg)
+
 		if errKill != nil {
-			log.Fatalf("Could not decode message due to '%v'", errKill)
+			log.Fatalf("Could not decode message due to '%v'", util.ReturnFirstErr(errFragment, errKill))
 		} else {
 			defer socket.Stop()
 			defer close(socket.Channel)

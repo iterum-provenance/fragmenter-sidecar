@@ -124,6 +124,7 @@ func (t Tracker) StartBlocking() {
 			}
 		}
 	}
+	log.Infoln("Tracker completed")
 }
 
 // Start is an asyncrhonous alternative to StartBlocking by spawning a goroutine
