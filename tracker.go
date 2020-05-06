@@ -44,7 +44,7 @@ func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmi
 		completedFragment,
 		make(FragmentMap),
 		make(UploadMap),
-		true,
+		false,
 	}
 
 	// Initialize each file to be attached to no fragments
