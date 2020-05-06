@@ -67,7 +67,6 @@ func receiverHandler(socket socket.Socket, conn net.Conn) {
 		// If it is a fragment filelist
 		fragment := filelist{}
 		errFragment := fragment.Deserialize(encMsg)
-
 		if errFragment == nil {
 			socket.Channel <- &fragment
 			continue
