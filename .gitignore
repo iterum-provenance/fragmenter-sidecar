@@ -18,3 +18,5 @@ build/
 .vscode
 venv*
 pyterum_debug.log
+local.mod
+local.sum

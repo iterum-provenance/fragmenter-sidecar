@@ -67,7 +67,11 @@ func (t Tracker) IsUploaded(fragment filelist) bool {
 // toRemoteFragmentDesc transforms a fully uploaded list of files into a RemoteFragmentDesc
 // This can be posted on the MQPublisher. It does a fatal log if any of the files is not yet uploaded
 func (t Tracker) toRemoteFragmentDesc(fragment filelist) desc.RemoteFragmentDesc {
-	fragmentDesc := desc.RemoteFragmentDesc{}
+	fragmentDesc := desc.RemoteFragmentDesc{
+		Metadata: desc.RemoteMetadata{
+			FragmentID: desc.NewIterumID(),
+		},
+	}
 	for _, file := range fragment {
 		if _, ok := t.uploads[file]; !ok {
 			log.Fatalf("Error: cannot convert non-uploaded fragment into RemoteFragmentDesc. missing file: '%v'\n", file)

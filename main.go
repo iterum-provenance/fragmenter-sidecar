@@ -3,15 +3,16 @@ package main
 import (
 	"sync"
 
+	"github.com/iterum-provenance/iterum-go/daemon"
 	envcomm "github.com/iterum-provenance/iterum-go/env"
 	"github.com/iterum-provenance/iterum-go/minio"
+	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/iterum-go/util"
 
-	"github.com/iterum-provenance/fragmenter/daemon"
-	"github.com/iterum-provenance/fragmenter/env"
-	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/sidecar/messageq"
 	"github.com/iterum-provenance/sidecar/socket"
+
+	"github.com/iterum-provenance/fragmenter/env"
 )
 
 func main() {
