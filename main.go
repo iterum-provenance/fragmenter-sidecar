@@ -9,6 +9,7 @@ import (
 	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/iterum-go/util"
 
+	"github.com/iterum-provenance/sidecar/lineage"
 	"github.com/iterum-provenance/sidecar/messageq"
 	"github.com/iterum-provenance/sidecar/socket"
 
@@ -51,6 +52,9 @@ func main() {
 	toMQBufferSize := len(files)
 	toMQChannel := make(chan transmit.Serializable, toMQBufferSize)
 
+	mqLineageBridgeBufferSize := 10
+	mqLineageBridge := make(chan transmit.Serializable, mqLineageBridgeBufferSize)
+
 	// Start downloading files from daemon and upload them to minio
 	dataMover := NewDataMover(minioConfig, daemonConfig, files, uploaded)
 	dataMover.Start(&wg)
@@ -58,9 +62,12 @@ func main() {
 	tracker := NewTracker(uploaded, fromFragmenterChannel, toMQChannel, files)
 	tracker.Start(&wg)
 
-	mqSender, err := messageq.NewSender(toMQChannel, envcomm.MQBrokerURL, envcomm.MQOutputQueue)
+	mqSender, err := messageq.NewSender(toMQChannel, mqLineageBridge, envcomm.MQBrokerURL, envcomm.MQOutputQueue)
 	util.Ensure(err, "MessageQueue sender succesfully created and listening")
 	mqSender.Start(&wg)
+
+	lineageTracker := lineage.NewTracker(envcomm.ProcessName, envcomm.ManagerURL, envcomm.PipelineHash, mqLineageBridge)
+	lineageTracker.Start(&wg)
 
 	wg.Wait()
 }
