@@ -69,7 +69,8 @@ func (t Tracker) IsUploaded(fragment filelist) bool {
 func (t Tracker) toRemoteFragmentDesc(fragment filelist) desc.RemoteFragmentDesc {
 	fragmentDesc := desc.RemoteFragmentDesc{
 		Metadata: desc.RemoteMetadata{
-			FragmentID: desc.NewIterumID(),
+			FragmentID:   desc.NewIterumID(),
+			Predecessors: []desc.IterumID{},
 		},
 	}
 	for _, file := range fragment {
