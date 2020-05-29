@@ -22,7 +22,7 @@ type UploadMap map[string]desc.RemoteFileDesc
 
 // FragmentMap maps files to a list of fragmenter-sidecar internal fragments (a list of files)
 // Meaning that an idv file name/path maps to a list of fragments its used in
-type FragmentMap map[string][]filelist
+type FragmentMap map[string][]subfragment
 
 // Tracker is a type used to monitor which fragments and files are uploaded and can start to be processed
 type Tracker struct {
@@ -47,16 +47,16 @@ func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmi
 		false,
 	}
 
-	// Initialize each file to be attached to no fragments
+	// Initialize each file to be attached to no fragments (yet)
 	for _, file := range tracker.Files {
-		tracker.fragments[file] = []filelist{}
+		tracker.fragments[file] = []subfragment{}
 	}
 	return tracker
 }
 
-// IsUploaded checks whether a filelist is completely uploaded to Minio
-func (t Tracker) IsUploaded(fragment filelist) bool {
-	for _, file := range fragment {
+// IsUploaded checks whether a subfragment is completely uploaded to Minio
+func (t Tracker) IsUploaded(fragment subfragment) bool {
+	for _, file := range fragment.Files {
 		if _, ok := t.uploads[file]; !ok {
 			return false
 		}
@@ -64,16 +64,17 @@ func (t Tracker) IsUploaded(fragment filelist) bool {
 	return true
 }
 
-// toRemoteFragmentDesc transforms a fully uploaded list of files into a RemoteFragmentDesc
+// toRemoteFragmentDesc transforms a fully uploaded subfragment into a RemoteFragmentDesc
 // This can be posted on the MQPublisher. It does a fatal log if any of the files is not yet uploaded
-func (t Tracker) toRemoteFragmentDesc(fragment filelist) desc.RemoteFragmentDesc {
+func (t Tracker) toRemoteFragmentDesc(fragment subfragment) desc.RemoteFragmentDesc {
 	fragmentDesc := desc.RemoteFragmentDesc{
 		Metadata: desc.RemoteMetadata{
 			FragmentID:   desc.NewIterumID(),
 			Predecessors: []desc.IterumID{},
+			Custom:       fragment.Metadata,
 		},
 	}
-	for _, file := range fragment {
+	for _, file := range fragment.Files {
 		if _, ok := t.uploads[file]; !ok {
 			log.Fatalf("Error: cannot convert non-uploaded fragment into RemoteFragmentDesc. missing file: '%v'\n", file)
 		}
@@ -106,15 +107,15 @@ func (t *Tracker) processFileUpload(upload Upload) {
 	}
 }
 
-func (t *Tracker) processFragmentDescription(fragment filelist) {
+func (t *Tracker) processFragmentDescription(fragment subfragment) {
 	// Add this fragment to the list of fragments of each file
-	for _, file := range fragment {
+	for _, file := range fragment.Files {
 		if _, ok := t.fragments[file]; !ok {
 			log.Fatalf("Returned fragment contained file not originally in the list of files: '%v'\n", file)
 		}
 		t.fragments[file] = append(t.fragments[file], fragment)
 	}
-	// If this fragment is already complete: publish it
+	// If this fragment is already complete: publish it, **for strict ordering reason see same if in processFileUpload**
 	if !t.strictOrdering && t.IsUploaded(fragment) {
 		fragmentDesc := t.toRemoteFragmentDesc(fragment)
 		t.Completed <- &fragmentDesc
@@ -127,7 +128,7 @@ func (t *Tracker) processFragmentDescription(fragment filelist) {
 func (t Tracker) StartBlocking() {
 	defer close(t.Completed)
 	// strictOrdering variables
-	orderedFragments := []filelist{}
+	orderedFragments := []subfragment{}
 
 	for t.Uploaded != nil || t.Fragmented != nil {
 		select {
@@ -144,7 +145,7 @@ func (t Tracker) StartBlocking() {
 				t.Fragmented = nil
 				break
 			}
-			fragment := *fragmentptr.(*filelist)
+			fragment := *fragmentptr.(*subfragment)
 			t.processFragmentDescription(fragment)
 			if t.strictOrdering {
 				orderedFragments = append(orderedFragments, fragment)

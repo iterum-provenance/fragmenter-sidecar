@@ -64,11 +64,11 @@ func receiverHandler(socket socket.Socket, conn net.Conn) {
 			return
 		}
 
-		// If it is a fragment filelist
-		fragment := filelist{}
-		errFragment := fragment.Deserialize(encMsg)
+		// If it is a subfragment
+		subfrag := subfragment{}
+		errFragment := subfrag.Deserialize(encMsg)
 		if errFragment == nil {
-			socket.Channel <- &fragment
+			socket.Channel <- &subfrag
 			continue
 		}
 
