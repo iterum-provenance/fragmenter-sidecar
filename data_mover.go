@@ -4,6 +4,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	"github.com/iterum-provenance/iterum-go/minio"
 )
@@ -12,12 +13,12 @@ import (
 type DataMover struct {
 	MinioConfig  minio.Config
 	DaemonConfig daemon.Config
-	Files        filelist
+	Files        data.Filelist
 	Completed    chan Upload
 }
 
 // NewDataMover initializes a new datamover
-func NewDataMover(mc minio.Config, dc daemon.Config, files filelist, completed chan Upload) DataMover {
+func NewDataMover(mc minio.Config, dc daemon.Config, files data.Filelist, completed chan Upload) DataMover {
 	return DataMover{mc, dc, files, completed}
 }
 

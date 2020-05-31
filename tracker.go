@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/common/log"
 
+	"github.com/iterum-provenance/fragmenter/data"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/transmit"
 )
@@ -22,13 +23,13 @@ type UploadMap map[string]desc.RemoteFileDesc
 
 // FragmentMap maps files to a list of fragmenter-sidecar internal fragments (a list of files)
 // Meaning that an idv file name/path maps to a list of fragments its used in
-type FragmentMap map[string][]subfragment
+type FragmentMap map[string][]data.Subfragment
 
 // Tracker is a type used to monitor which fragments and files are uploaded and can start to be processed
 type Tracker struct {
-	Files          filelist
+	Files          data.Filelist
 	Uploaded       chan Upload
-	Fragmented     chan transmit.Serializable // filelist
+	Fragmented     chan transmit.Serializable // data.Filelist
 	Completed      chan transmit.Serializable // desc.RemoteFragmentDesc
 	fragments      FragmentMap
 	uploads        UploadMap
@@ -36,7 +37,7 @@ type Tracker struct {
 }
 
 // NewTracker instantiates a new tracker and attaches itself to the passed channels
-func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmit.Serializable, allFiles filelist) Tracker {
+func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmit.Serializable, allFiles data.Filelist) Tracker {
 	tracker := Tracker{
 		allFiles,
 		uploaded,
@@ -49,13 +50,13 @@ func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmi
 
 	// Initialize each file to be attached to no fragments (yet)
 	for _, file := range tracker.Files {
-		tracker.fragments[file] = []subfragment{}
+		tracker.fragments[file] = []data.Subfragment{}
 	}
 	return tracker
 }
 
 // IsUploaded checks whether a subfragment is completely uploaded to Minio
-func (t Tracker) IsUploaded(fragment subfragment) bool {
+func (t Tracker) IsUploaded(fragment data.Subfragment) bool {
 	for _, file := range fragment.Files {
 		if _, ok := t.uploads[file]; !ok {
 			return false
@@ -66,7 +67,7 @@ func (t Tracker) IsUploaded(fragment subfragment) bool {
 
 // toRemoteFragmentDesc transforms a fully uploaded subfragment into a RemoteFragmentDesc
 // This can be posted on the MQPublisher. It does a fatal log if any of the files is not yet uploaded
-func (t Tracker) toRemoteFragmentDesc(fragment subfragment) desc.RemoteFragmentDesc {
+func (t Tracker) toRemoteFragmentDesc(fragment data.Subfragment) desc.RemoteFragmentDesc {
 	fragmentDesc := desc.RemoteFragmentDesc{
 		Metadata: desc.RemoteMetadata{
 			FragmentID:   desc.NewIterumID(),
@@ -107,7 +108,7 @@ func (t *Tracker) processFileUpload(upload Upload) {
 	}
 }
 
-func (t *Tracker) processFragmentDescription(fragment subfragment) {
+func (t *Tracker) processFragmentDescription(fragment data.Subfragment) {
 	// Add this fragment to the list of fragments of each file
 	for _, file := range fragment.Files {
 		if _, ok := t.fragments[file]; !ok {
@@ -128,7 +129,7 @@ func (t *Tracker) processFragmentDescription(fragment subfragment) {
 func (t Tracker) StartBlocking() {
 	defer close(t.Completed)
 	// strictOrdering variables
-	orderedFragments := []subfragment{}
+	orderedFragments := []data.Subfragment{}
 
 	for t.Uploaded != nil || t.Fragmented != nil {
 		select {
@@ -145,7 +146,7 @@ func (t Tracker) StartBlocking() {
 				t.Fragmented = nil
 				break
 			}
-			fragment := *fragmentptr.(*subfragment)
+			fragment := *fragmentptr.(*data.Subfragment)
 			t.processFragmentDescription(fragment)
 			if t.strictOrdering {
 				orderedFragments = append(orderedFragments, fragment)

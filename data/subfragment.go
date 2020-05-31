@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"encoding/json"
@@ -6,15 +6,15 @@ import (
 	"github.com/iterum-provenance/iterum-go/transmit"
 )
 
-// subfragment is the incomplete structure returned from a fragmenter, which is then further enriched
+// Subfragment is the incomplete structure returned from a fragmenter, which is then further enriched
 // and completed to a full FragmentDesc by the fragmenter-sidecar before sending it on to the message queue
-type subfragment struct {
+type Subfragment struct {
 	Files    []string               `json:"files"`
 	Metadata map[string]interface{} `json:"metadata"`
 }
 
 // Serialize tries to transform `sf` into a json encoded bytearray. Errors on failure
-func (sf *subfragment) Serialize() (data []byte, err error) {
+func (sf *Subfragment) Serialize() (data []byte, err error) {
 	data, err = json.Marshal(sf)
 	if err != nil {
 		err = transmit.ErrSerialization(err)
@@ -23,7 +23,7 @@ func (sf *subfragment) Serialize() (data []byte, err error) {
 }
 
 // Deserialize tries to decode a json encoded byte array into `sf`. Errors on failure
-func (sf *subfragment) Deserialize(data []byte) (err error) {
+func (sf *Subfragment) Deserialize(data []byte) (err error) {
 	err = json.Unmarshal(data, sf)
 	if err != nil {
 		err = transmit.ErrSerialization(err)

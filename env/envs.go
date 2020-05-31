@@ -1,12 +1,15 @@
 package env
 
 import (
-	"log"
 	"os"
 	"strings"
 
+	"github.com/prometheus/common/log"
+
 	"github.com/iterum-provenance/iterum-go/env"
 	"github.com/iterum-provenance/iterum-go/util"
+
+	"github.com/iterum-provenance/fragmenter/env/config"
 )
 
 const (
@@ -20,6 +23,9 @@ var FragmenterInputSocket = env.DataVolumePath + "/" + os.Getenv(inputSocketEnv)
 // FragmenterOutputSocket is the path to the socket used for fragmenter output
 var FragmenterOutputSocket = env.DataVolumePath + "/" + os.Getenv(outputSocketEnv)
 
+// Config , if it exists, contains additional configuration information for the fragmenter-sidecar
+var Config *config.Config = nil
+
 // VerifyFragmenterSidecarEnvs checks whether each of the environment variables returned a non-empty value
 func VerifyFragmenterSidecarEnvs() error {
 	if !strings.HasSuffix(FragmenterInputSocket, ".sock") {
@@ -30,14 +36,30 @@ func VerifyFragmenterSidecarEnvs() error {
 	return nil
 }
 
+// VerifyFragmenterSidecarConfig verifies the config struct of the fragmenter sidecar
+func VerifyFragmenterSidecarConfig() error {
+	if env.ProcessConfig == "" {
+		log.Infoln("Fragmenter-sidecar was initialized without additional config, make sure that this was intended")
+	} else {
+		c := config.Config{}
+		errConfig := c.FromString(env.ProcessConfig)
+		if errConfig != nil {
+			return errConfig
+		}
+		Config = &c
+	}
+	return nil
+}
+
 func init() {
 	errIterum := env.VerifyIterumEnvs()
 	errDaemon := env.VerifyDaemonEnvs()
 	errMinio := env.VerifyMinioEnvs()
 	errMessageq := env.VerifyMessageQueueEnvs()
 	errSidecar := VerifyFragmenterSidecarEnvs()
+	errSidecarConf := VerifyFragmenterSidecarConfig()
 
-	err := util.ReturnFirstErr(errIterum, errMinio, errMessageq, errDaemon, errSidecar)
+	err := util.ReturnFirstErr(errIterum, errMinio, errMessageq, errDaemon, errSidecar, errSidecarConf)
 	if err != nil {
 		log.Fatalln(err)
 	}

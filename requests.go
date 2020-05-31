@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 
+	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
+	"github.com/iterum-provenance/iterum-go/env"
 	"github.com/iterum-provenance/iterum-go/minio"
 	"github.com/iterum-provenance/iterum-go/util"
 
@@ -49,10 +53,10 @@ func _get(url string, target interface{}) (err error) {
 
 // getCommitFiles pulls a specific commmit based on its hash and dataset and passed daemonURL
 // it returns the list of files associated with this commmit
-func getCommitFiles(config daemon.Config) (files filelist, err error) {
+func getCommitFiles(config daemon.Config) (files data.Filelist, err error) {
 	commit := idv.Commit{}
 	err = _get(config.DaemonURL+"/"+config.Dataset+"/commit/"+config.CommitHash, &commit)
-	return filelist(commit.Files), err
+	return data.Filelist(commit.Files), err
 }
 
 func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string, retries int) (remoteFile desc.RemoteFileDesc, err error) {
@@ -71,4 +75,26 @@ func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string
 	}
 
 	return minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
+}
+
+func downloadConfigFileFromDaemon(daemon daemon.Config, filePath string) (local desc.LocalFileDesc, err error) {
+	defer util.ReturnErrOnPanic(&err)()
+
+	// Get the data
+	resp, err := http.Get(daemon.DaemonURL + "/" + daemon.Dataset + "/file/" + filePath)
+	util.PanicIfErr(err, "")
+	defer resp.Body.Close()
+
+	path := env.DataVolumePath + "/config/" + filepath.Dir(filePath)
+	out, err := os.Create(path)
+	util.PanicIfErr(err, "")
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	util.PanicIfErr(err, "")
+
+	return desc.LocalFileDesc{
+		Name:      filepath.Dir(filePath),
+		LocalPath: path,
+	}, nil
 }

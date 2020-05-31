@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 
+	"github.com/iterum-provenance/fragmenter/data"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/util"
 
@@ -65,7 +66,7 @@ func receiverHandler(socket socket.Socket, conn net.Conn) {
 		}
 
 		// If it is a subfragment
-		subfrag := subfragment{}
+		subfrag := data.Subfragment{}
 		errFragment := subfrag.Deserialize(encMsg)
 		if errFragment == nil {
 			socket.Channel <- &subfrag
