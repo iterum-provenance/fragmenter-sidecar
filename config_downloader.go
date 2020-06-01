@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"sync"
 
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/transmit"
+	"github.com/prometheus/common/log"
 )
 
 // ConfigDownloader is the structure responsible for downloading
@@ -34,6 +34,7 @@ func NewConfigDownloader(files data.Filelist, toDownload data.Filelist, daemon d
 // StartBlocking starts the process of downloading the config files
 func (cd *ConfigDownloader) StartBlocking() {
 	defer close(cd.Completed)
+	log.Infof("Starting to dowload %v fragmenter config files", len(cd.ToDownload))
 	wg := &sync.WaitGroup{}
 	// Start the downloading of each config file
 	for _, file := range cd.ToDownload {
@@ -50,6 +51,7 @@ func (cd *ConfigDownloader) StartBlocking() {
 	// Wait for the downloading to finish
 	wg.Wait()
 	close(cd.finished)
+	log.Infof("Finished downloading fragmenter config files")
 
 	// Channel is already closed so loop will terminate once all messages are processed
 	configFiles := []desc.LocalFileDesc{}
@@ -61,8 +63,8 @@ func (cd *ConfigDownloader) StartBlocking() {
 		DataFiles:   cd.AllFiles,
 		ConfigFiles: configFiles,
 	}
+	log.Infof("Finishing up ConfigDownloader")
 	cd.Completed <- &fi
-	close(cd.Completed)
 }
 
 // Start is an asyncrhonous alternative to StartBlocking by spawning a goroutine

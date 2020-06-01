@@ -53,6 +53,9 @@ func (conf Config) ReturnMatchingFiles(files data.Filelist) (matches data.Fileli
 			fullRegexp += "| (" + regex.String() + ")"
 		}
 	}
+	if fullRegexp == "" {
+		return
+	}
 	// Compile the big regex
 	regex, err := regexp.Compile(fullRegexp)
 	if err != nil {

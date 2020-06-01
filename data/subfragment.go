@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/iterum-provenance/iterum-go/transmit"
 )
@@ -27,6 +28,9 @@ func (sf *Subfragment) Deserialize(data []byte) (err error) {
 	err = json.Unmarshal(data, sf)
 	if err != nil {
 		err = transmit.ErrSerialization(err)
+	}
+	if len(sf.Files) == 0 {
+		return transmit.ErrSerialization(errors.New("Invalid subfragment value, cannot contain 0 files"))
 	}
 	return
 }
