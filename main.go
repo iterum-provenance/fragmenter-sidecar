@@ -43,8 +43,10 @@ func main() {
 	files, err := getCommitFiles(daemonConfig)
 	util.PanicIfErr(err, "")
 
-	// Send the file list to the fragmenter
-	pipe.ToTarget <- &files
+	// Download config and then send the file list to the fragmenter
+	matches := env.Config.ReturnMatchingFiles(files)
+	configDownloader := NewConfigDownloader(files, matches, daemonConfig, pipe.ToTarget)
+	configDownloader.Start(&wg)
 
 	uploadedBufferSize := len(files)
 	uploaded := make(chan Upload, uploadedBufferSize)
