@@ -85,7 +85,10 @@ func downloadConfigFileFromDaemon(daemon daemon.Config, filePath string) (local 
 	util.PanicIfErr(err, "")
 	defer resp.Body.Close()
 
-	path := env.DataVolumePath + "/config/" + filepath.Dir(filePath)
+	folder := env.DataVolumePath + "/config/"
+	path := folder + filepath.Dir(filePath)
+	err = os.MkdirAll(folder, os.ModePerm)
+	util.PanicIfErr(err, "")
 	out, err := os.Create(path)
 	util.PanicIfErr(err, "")
 	defer out.Close()
