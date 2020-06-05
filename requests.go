@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/iterum-provenance/fragmenter/data"
@@ -85,9 +87,11 @@ func downloadConfigFileFromDaemon(daemon daemon.Config, filePath string) (local 
 	util.PanicIfErr(err, "")
 	defer resp.Body.Close()
 
-	folder := env.DataVolumePath + "/config/"
-	path := folder + filepath.Dir(filePath)
-	err = os.MkdirAll(folder, os.ModePerm)
+	if env.ProcessConfigPath == env.DataVolumePath {
+		log.Fatalf("EnvironmentError: '%v' is not a valid value for ITERUM_CONFIG_PATH", env.ProcessConfigPath)
+	}
+	err = os.MkdirAll(env.ProcessConfigPath, os.ModePerm)
+	path := path.Join(env.ProcessConfigPath, filepath.Dir(filePath))
 	util.PanicIfErr(err, "")
 	out, err := os.Create(path)
 	util.PanicIfErr(err, "")

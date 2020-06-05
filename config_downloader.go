@@ -6,6 +6,7 @@ import (
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
+	"github.com/iterum-provenance/iterum-go/minio"
 	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/prometheus/common/log"
 )
@@ -16,16 +17,21 @@ type ConfigDownloader struct {
 	AllFiles     data.Filelist
 	ToDownload   data.Filelist
 	DaemonConfig daemon.Config
+	MinioConfig  minio.Config
 	Completed    chan<- transmit.Serializable //*data.FragmenterInput
 	finished     chan desc.LocalFileDesc
 }
 
 // NewConfigDownloader instantiates a new config downloader without starting it
-func NewConfigDownloader(files data.Filelist, toDownload data.Filelist, daemon daemon.Config, completed chan transmit.Serializable) ConfigDownloader {
+func NewConfigDownloader(files data.Filelist, toDownload data.Filelist,
+	daemon daemon.Config, minio minio.Config,
+	completed chan transmit.Serializable) ConfigDownloader {
+
 	return ConfigDownloader{
 		AllFiles:     files,
 		ToDownload:   toDownload,
 		DaemonConfig: daemon,
+		MinioConfig:  minio,
 		Completed:    completed,
 		finished:     make(chan desc.LocalFileDesc, len(toDownload)),
 	}
@@ -53,8 +59,8 @@ func (cd *ConfigDownloader) StartBlocking() {
 	close(cd.finished)
 	log.Infof("Finished downloading fragmenter config files")
 
-	// Channel is already closed so loop will terminate once all messages are processed
 	configFiles := []desc.LocalFileDesc{}
+	// Channel cd.finished is already closed so loop will terminate once all messages are processed
 	for fileDesc := range cd.finished {
 		configFiles = append(configFiles, fileDesc)
 	}
@@ -63,8 +69,13 @@ func (cd *ConfigDownloader) StartBlocking() {
 		DataFiles:   cd.AllFiles,
 		ConfigFiles: configFiles,
 	}
-	log.Infof("Finishing up ConfigDownloader")
 	cd.Completed <- &fi
+
+	// Start uploading the config files to minio concurrently as well
+	cfgUploader := NewConfigUploader(configFiles, cd.MinioConfig)
+	cfgUploader.Start(wg)
+	wg.Wait()
+	log.Infof("Finishing up ConfigDownloader")
 }
 
 // Start is an asyncrhonous alternative to StartBlocking by spawning a goroutine
