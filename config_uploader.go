@@ -3,8 +3,6 @@ package main
 import (
 	"sync"
 
-	"github.com/iterum-provenance/iterum-go/env"
-
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/minio"
 	"github.com/prometheus/common/log"
@@ -19,7 +17,6 @@ type ConfigUploader struct {
 
 // NewConfigUploader instantiates a new config downloader without starting it
 func NewConfigUploader(files []desc.LocalFileDesc, minio minio.Config) ConfigUploader {
-	minio.TargetBucket = env.PipelineHash + "-ITERUM-CONFIG"
 	return ConfigUploader{
 		ToUpload:    files,
 		MinioConfig: minio,
@@ -34,7 +31,7 @@ func (cu *ConfigUploader) StartBlocking() {
 	for _, localFileDesc := range cu.ToUpload {
 		wg.Add(1)
 		go func(fdesc desc.LocalFileDesc) {
-			_, err := cu.MinioConfig.PutFile(fdesc)
+			_, err := cu.MinioConfig.PutConfigFile(fdesc)
 			if err != nil {
 				log.Fatalf("Could not upload config file to minio due to '%v'", err)
 			}
