@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -18,6 +17,7 @@ import (
 	"github.com/iterum-provenance/iterum-go/env"
 	"github.com/iterum-provenance/iterum-go/minio"
 	"github.com/iterum-provenance/iterum-go/util"
+	"github.com/prometheus/common/log"
 
 	"github.com/iterum-provenance/cli/idv"
 )
@@ -75,7 +75,6 @@ func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string
 		Name:      filepath.Dir(filePath),
 		LocalPath: filePath,
 	}
-
 	return minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
 }
 

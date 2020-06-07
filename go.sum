@@ -96,6 +96,10 @@ github.com/iterum-provenance/sidecar v0.2.1 h1:qu8tSA/G3hOvzybggoaM+of6UUPfhUqhn
 github.com/iterum-provenance/sidecar v0.2.1/go.mod h1:YKnM1wTAdpKw3KXjH0DHnBZUVc5CBeV+MvzgYUQMaTw=
 github.com/iterum-provenance/sidecar v0.2.2 h1:9BIMhCtDLljx1f0FbMjCrlDRwBWhBHm+CtUYJcYxJ2g=
 github.com/iterum-provenance/sidecar v0.2.2/go.mod h1:hPipOZKy+lR48Rf8oJ6ezOiTEkZ9WDS78Y2n92a3+NU=
+github.com/iterum-provenance/sidecar v0.2.3 h1:kyeL9762oHxqAq5UFNLHRTtIA6Q+n9P7yaiBo6SKHzQ=
+github.com/iterum-provenance/sidecar v0.2.3/go.mod h1:NmFqI3RMcqZban+xmAfLTbewOtxZJSow9aRpEiSVO9w=
+github.com/iterum-provenance/sidecar v0.2.4 h1:zIMOgySHoYUB3lgP3GodIBjBxCa/QPM/XmMHnZmAuAQ=
+github.com/iterum-provenance/sidecar v0.2.4/go.mod h1:NmFqI3RMcqZban+xmAfLTbewOtxZJSow9aRpEiSVO9w=
 github.com/joho/godotenv v1.3.0/go.mod h1:7hK45KPybAkOC6peb+G5yklZfMxEjkZhHbwpqxOKXbg=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=

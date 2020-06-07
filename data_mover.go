@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
 	"sync"
 
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	"github.com/iterum-provenance/iterum-go/minio"
+	"github.com/prometheus/common/log"
 )
 
 // DataMover is the structure responsible for pulling data from the daemon and into minio

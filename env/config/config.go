@@ -10,6 +10,7 @@ import (
 
 // Config is the struct holding configurable information
 // This can be set via the environment variable ITERUM_CONFIG
+// Config selectors contains all the config files used throughout this pipeline run
 type Config struct {
 	ConfigSelectors []*regexp.Regexp // nillable
 }
@@ -17,7 +18,7 @@ type Config struct {
 // FromString converts a string value into an instance of Config and also does validation
 func (conf *Config) FromString(stringified string) (err error) {
 	var placeholder struct {
-		ConfigFiles []string `json:"config_files"`
+		ConfigFiles []string `json:"config_files_all"`
 	}
 	err = json.Unmarshal([]byte(stringified), &placeholder)
 	if err != nil {
