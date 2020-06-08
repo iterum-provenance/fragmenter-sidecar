@@ -2,7 +2,6 @@ package env
 
 import (
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/prometheus/common/log"
@@ -39,16 +38,16 @@ func VerifyFragmenterSidecarEnvs() error {
 
 // VerifyFragmenterSidecarConfig verifies the config struct of the fragmenter sidecar
 func VerifyFragmenterSidecarConfig() error {
-	c := config.Config{ConfigSelectors: []*regexp.Regexp{}}
 	if env.ProcessConfig == "" {
 		log.Warnln("Fragmenter-sidecar was initialized without additional config, make sure that this was intended")
 	} else {
+		c := config.Config{}
 		errConfig := c.FromString(env.ProcessConfig)
 		if errConfig != nil {
 			return errConfig
 		}
+		Config = &c
 	}
-	Config = &c
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/iterum-provenance/fragmenter/data"
+	"github.com/iterum-provenance/fragmenter/env/config"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/minio"
@@ -15,7 +16,7 @@ import (
 // the config files used by the fragmenter to properly fragment data files
 type ConfigDownloader struct {
 	AllFiles     data.Filelist
-	ToDownload   data.Filelist
+	Config       *config.Config
 	DaemonConfig daemon.Config
 	MinioConfig  minio.Config
 	Completed    chan<- transmit.Serializable //*data.FragmenterInput
@@ -23,27 +24,34 @@ type ConfigDownloader struct {
 }
 
 // NewConfigDownloader instantiates a new config downloader without starting it
-func NewConfigDownloader(files data.Filelist, toDownload data.Filelist,
+func NewConfigDownloader(files data.Filelist, config *config.Config,
 	daemon daemon.Config, minio minio.Config,
 	completed chan transmit.Serializable) ConfigDownloader {
 
 	return ConfigDownloader{
 		AllFiles:     files,
-		ToDownload:   toDownload,
+		Config:       config,
 		DaemonConfig: daemon,
 		MinioConfig:  minio,
 		Completed:    completed,
-		finished:     make(chan desc.LocalFileDesc, len(toDownload)),
+		finished:     nil,
 	}
 }
 
 // StartBlocking starts the process of downloading the config files
 func (cd *ConfigDownloader) StartBlocking() {
 	defer close(cd.Completed)
-	log.Infof("Starting to dowload %v fragmenter config files", len(cd.ToDownload))
+
+	toDownload := data.Filelist([]string{})
+	if cd.Config != nil {
+		toDownload = cd.Config.ReturnMatchingFiles(cd.AllFiles)
+		cd.finished = make(chan desc.LocalFileDesc, len(toDownload))
+	}
+
+	log.Infof("Starting to dowload %v fragmenter config files", len(toDownload))
 	wg := &sync.WaitGroup{}
 	// Start the downloading of each config file
-	for _, file := range cd.ToDownload {
+	for _, file := range toDownload {
 		wg.Add(1)
 		go func(f string) {
 			fileDesc, err := downloadConfigFileFromDaemon(cd.DaemonConfig, f)

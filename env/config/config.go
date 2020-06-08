@@ -2,35 +2,23 @@ package config
 
 import (
 	"encoding/json"
-	"regexp"
+	"path"
 
 	data "github.com/iterum-provenance/fragmenter/data"
-	"github.com/prometheus/common/log"
 )
 
 // Config is the struct holding configurable information
 // This can be set via the environment variable ITERUM_CONFIG
 // Config selectors contains all the config files used throughout this pipeline run
 type Config struct {
-	ConfigSelectors []*regexp.Regexp // nillable
+	ConfigFiles map[string][]string `json:"config_files_all"` // nillable
 }
 
 // FromString converts a string value into an instance of Config and also does validation
 func (conf *Config) FromString(stringified string) (err error) {
-	var placeholder struct {
-		ConfigFiles []string `json:"config_files_all"`
-	}
-	err = json.Unmarshal([]byte(stringified), &placeholder)
+	err = json.Unmarshal([]byte(stringified), conf)
 	if err != nil {
 		return err
-	}
-	conf.ConfigSelectors = []*regexp.Regexp{}
-	for _, selector := range placeholder.ConfigFiles {
-		regex, err := regexp.Compile(selector)
-		if err != nil {
-			return err
-		}
-		conf.ConfigSelectors = append(conf.ConfigSelectors, regex)
 	}
 	return conf.Validate()
 }
@@ -42,31 +30,23 @@ func (conf Config) Validate() error {
 }
 
 // ReturnMatchingFiles returns the list of files matching the ConfigSelectors of conf
-func (conf Config) ReturnMatchingFiles(files data.Filelist) (matches data.Filelist) {
+func (conf Config) ReturnMatchingFiles(commitFiles data.Filelist) (matches data.Filelist) {
 	matches = data.Filelist([]string{})
-	fullRegexp := ""
-	first := true
-	// Create 1 big regex
-	for _, regex := range conf.ConfigSelectors {
-		if first {
-			fullRegexp += "(" + regex.String() + ")"
-		} else {
-			fullRegexp += "| (" + regex.String() + ")"
-		}
+
+	if len(commitFiles) == 0 {
+		return matches
 	}
-	if fullRegexp == "" {
-		return
-	}
-	// Compile the big regex
-	regex, err := regexp.Compile(fullRegexp)
-	if err != nil {
-		log.Errorln(err)
-		return
-	}
-	// Match each file against the large regexp once
-	for _, file := range files {
-		if regex.MatchString(file) {
-			matches = append(matches, file)
+
+	// Match each file against each selector
+	for _, file := range commitFiles {
+		filename := path.Dir(file)
+		for _, selectors := range conf.ConfigFiles {
+			for _, selector := range selectors {
+				// path.Dir because a file from a commit is always: filename.extension/commit-hash-of-dataset
+				if selector == filename {
+					matches = append(matches, file)
+				}
+			}
 		}
 	}
 	return matches

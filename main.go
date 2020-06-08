@@ -44,8 +44,7 @@ func main() {
 	util.PanicIfErr(err, "")
 
 	// Download config and then send the file list to the fragmenter
-	matches := env.Config.ReturnMatchingFiles(files)
-	configDownloader := NewConfigDownloader(files, matches, daemonConfig, minioConfig, pipe.ToTarget)
+	configDownloader := NewConfigDownloader(files, env.Config, daemonConfig, minioConfig, pipe.ToTarget)
 	configDownloader.Start(&wg)
 
 	uploadedBufferSize := len(files)
