@@ -92,6 +92,8 @@ github.com/iterum-provenance/iterum-go v0.2.3 h1:Dep30MohzioLwWkLGnVdIoqDJBc9vL8
 github.com/iterum-provenance/iterum-go v0.2.3/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
 github.com/iterum-provenance/iterum-go v0.2.4 h1:yFssV9m3tNStoW83X1h+Pp8lnJvpd1M5Krla3479ZME=
 github.com/iterum-provenance/iterum-go v0.2.4/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
+github.com/iterum-provenance/iterum-go v0.2.5 h1:h9So8J7ZHQgsIvJd4b96KilAzx0k5HsTArKbEKOol48=
+github.com/iterum-provenance/iterum-go v0.2.5/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
 github.com/iterum-provenance/sidecar v0.2.0 h1:NWMO+F7zFWypbAnM1HlVleP8I8bQ7ikMJ5v1xI63IHA=
 github.com/iterum-provenance/sidecar v0.2.0/go.mod h1:YKnM1wTAdpKw3KXjH0DHnBZUVc5CBeV+MvzgYUQMaTw=
 github.com/iterum-provenance/sidecar v0.2.1 h1:qu8tSA/G3hOvzybggoaM+of6UUPfhUqhno6Q0vtXt7Q=
@@ -104,6 +106,8 @@ github.com/iterum-provenance/sidecar v0.2.4 h1:zIMOgySHoYUB3lgP3GodIBjBxCa/QPM/X
 github.com/iterum-provenance/sidecar v0.2.4/go.mod h1:NmFqI3RMcqZban+xmAfLTbewOtxZJSow9aRpEiSVO9w=
 github.com/iterum-provenance/sidecar v0.2.5 h1:Muwoakiwl7W9g8e2pHMOAB8JTKAWMfMA6viFGUpxq9c=
 github.com/iterum-provenance/sidecar v0.2.5/go.mod h1:RxFig7GN06MbrBcj1huu+zuLSDwEkxXd3wbGg+Io23Y=
+github.com/iterum-provenance/sidecar v0.2.6 h1:KpPMH1Im50FtH2feSJbG2YykjiQ463GRm4/Az0Eg/pQ=
+github.com/iterum-provenance/sidecar v0.2.6/go.mod h1:GRKa6cZll+wmqj41L/moNqEt/HIpki7IsUt82rIei3Q=
 github.com/joho/godotenv v1.3.0/go.mod h1:7hK45KPybAkOC6peb+G5yklZfMxEjkZhHbwpqxOKXbg=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
