@@ -3,14 +3,12 @@ package data
 import (
 	"encoding/json"
 
-	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/transmit"
 )
 
 // FragmenterInput is the message format sent from the sidecar to the fragmenter
 type FragmenterInput struct {
-	ConfigFiles []desc.LocalFileDesc `json:"config_files"`
-	DataFiles   Filelist             `json:"data_files"`
+	DataFiles Filelist `json:"data_files"`
 }
 
 // Serialize tries to transform `fi` into a json encoded bytearray. Errors on failure

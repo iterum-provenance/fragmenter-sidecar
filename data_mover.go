@@ -29,6 +29,7 @@ func (dm DataMover) StartBlocking() {
 
 	filesToUploadChannel := make(chan string, len(dm.Files))
 
+	// Spawn 10 uploader workers
 	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
 		go func(filesToUpload <-chan string, completions chan<- Upload) {
@@ -43,6 +44,7 @@ func (dm DataMover) StartBlocking() {
 		}(filesToUploadChannel, dm.Completed)
 	}
 
+	// Push all the work to the worker queue
 	for _, file := range dm.Files {
 		filesToUploadChannel <- file
 	}

@@ -3,17 +3,16 @@ package main
 import (
 	"sync"
 
+	"github.com/iterum-provenance/fragmenter/data"
+	"github.com/iterum-provenance/fragmenter/env"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	envcomm "github.com/iterum-provenance/iterum-go/env"
 	"github.com/iterum-provenance/iterum-go/minio"
 	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/iterum-go/util"
-
 	"github.com/iterum-provenance/sidecar/lineage"
 	"github.com/iterum-provenance/sidecar/messageq"
 	"github.com/iterum-provenance/sidecar/socket"
-
-	"github.com/iterum-provenance/fragmenter/env"
 )
 
 func main() {
@@ -44,7 +43,7 @@ func main() {
 	util.PanicIfErr(err, "")
 
 	// Download config and then send the file list to the fragmenter
-	configDownloader := NewConfigDownloader(files, env.Config, daemonConfig, minioConfig, pipe.ToTarget)
+	configDownloader := NewConfigDownloader(files, env.Config, daemonConfig, minioConfig)
 	configDownloader.Start(&wg)
 
 	uploadedBufferSize := len(files)
@@ -69,6 +68,9 @@ func main() {
 
 	lineageTracker := lineage.NewTracker(envcomm.ProcessName, envcomm.ManagerURL, envcomm.PipelineHash, mqLineageBridge)
 	lineageTracker.Start(&wg)
+
+	// Send the files to the input handler
+	pipe.ToTarget <- &data.FragmenterInput{DataFiles: files}
 
 	wg.Wait()
 }
