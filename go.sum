@@ -94,6 +94,8 @@ github.com/iterum-provenance/iterum-go v0.2.4 h1:yFssV9m3tNStoW83X1h+Pp8lnJvpd1M
 github.com/iterum-provenance/iterum-go v0.2.4/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
 github.com/iterum-provenance/iterum-go v0.2.5 h1:h9So8J7ZHQgsIvJd4b96KilAzx0k5HsTArKbEKOol48=
 github.com/iterum-provenance/iterum-go v0.2.5/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
+github.com/iterum-provenance/iterum-go v0.3.0 h1:kFfAGtYVmDCiD+kVjmoQwbIogUBeJE4wqG39QKfIts8=
+github.com/iterum-provenance/iterum-go v0.3.0/go.mod h1:lBD1WJMbMZRRJT9ZZsLqMhY5wePnk0Gxu5CmPAbMzVg=
 github.com/iterum-provenance/sidecar v0.2.0 h1:NWMO+F7zFWypbAnM1HlVleP8I8bQ7ikMJ5v1xI63IHA=
 github.com/iterum-provenance/sidecar v0.2.0/go.mod h1:YKnM1wTAdpKw3KXjH0DHnBZUVc5CBeV+MvzgYUQMaTw=
 github.com/iterum-provenance/sidecar v0.2.1 h1:qu8tSA/G3hOvzybggoaM+of6UUPfhUqhno6Q0vtXt7Q=
@@ -108,6 +110,8 @@ github.com/iterum-provenance/sidecar v0.2.5 h1:Muwoakiwl7W9g8e2pHMOAB8JTKAWMfMA6
 github.com/iterum-provenance/sidecar v0.2.5/go.mod h1:RxFig7GN06MbrBcj1huu+zuLSDwEkxXd3wbGg+Io23Y=
 github.com/iterum-provenance/sidecar v0.2.6 h1:KpPMH1Im50FtH2feSJbG2YykjiQ463GRm4/Az0Eg/pQ=
 github.com/iterum-provenance/sidecar v0.2.6/go.mod h1:GRKa6cZll+wmqj41L/moNqEt/HIpki7IsUt82rIei3Q=
+github.com/iterum-provenance/sidecar v0.2.22 h1:0LQd8rhl6lhXkVBDFr4M3Cy3a70ZSURgdEQdRfawvZE=
+github.com/iterum-provenance/sidecar v0.2.22/go.mod h1:XCRkccbNk3/6zqJY3hdAIpbaYDNqPqiFmCo8BC4b3hw=
 github.com/joho/godotenv v1.3.0/go.mod h1:7hK45KPybAkOC6peb+G5yklZfMxEjkZhHbwpqxOKXbg=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
@@ -120,6 +124,7 @@ github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvW
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/klauspost/compress v1.9.5/go.mod h1:RyIbtBH6LamlWaDj8nUwkbUhJ87Yi3uG0guNDohfE1A=
+github.com/konsorten/go-windows-terminal-sequences v1.0.1 h1:mweAR1A6xJ3oS2pRaGiHgQ4OO8tzTaLawm8vnODuwDk=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=

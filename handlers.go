@@ -1,13 +1,11 @@
 package main
 
 import (
-	"encoding/binary"
 	"net"
 	"os"
 
 	"github.com/iterum-provenance/fragmenter/data"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
-
 	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/sidecar/socket"
 	"github.com/prometheus/common/log"
@@ -35,65 +33,18 @@ func senderHandler(socket socket.Socket, conn net.Conn) {
 	kill := desc.NewKillMessage()
 
 	// Send the msgs over the connection
-	err := EncodeSend2(conn, msg)
+	err := transmit.EncodeSend(conn, msg)
 	if err != nil {
 		errHandler(err)
 		return
 	}
-	err = EncodeSend2(conn, &kill)
+	err = transmit.EncodeSend(conn, &kill)
 	if err != nil {
 		errHandler(err)
 		return
 	}
 
 	socket.Stop()
-}
-
-// EncodeSend2 is temporary.
-func EncodeSend2(conn net.Conn, obj transmit.Serializable) (err error) {
-	// Encoding
-	data, err := obj.Serialize()
-	if err != nil {
-		return
-	}
-
-	size := make([]byte, transmit.FragmentSizeLength)
-	binary.LittleEndian.PutUint32(size, uint32(len(data)))
-
-	log.Infoln(string(size))
-	log.Infoln(uint32(len(data)))
-	log.Infoln(len(data))
-
-	data = append(size, data...)
-
-	// Sending
-	bytesWrittenTotal := 0
-	lwb := 0
-	maxChunkSize := 131072
-	upb := maxChunkSize
-	dataLen := len(data)
-	if maxChunkSize > dataLen {
-		upb = dataLen
-	} else {
-		upb = maxChunkSize
-	}
-	for bytesWrittenTotal != dataLen {
-
-		bytesWritten, err := conn.Write(data[lwb:upb])
-		lwb = upb
-		if maxChunkSize+upb > dataLen {
-			upb = dataLen
-		} else {
-			upb += maxChunkSize
-		}
-		if err != nil {
-			return transmit.ErrConnection(err)
-		}
-		bytesWrittenTotal += bytesWritten
-		log.Infof("Written %d / %d bytes", bytesWrittenTotal, dataLen)
-	}
-
-	return
 }
 
 // receiverHandler is a handler for a socket that receives fragmented file list from the fragmenter
