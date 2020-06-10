@@ -82,15 +82,20 @@ func downloadConfigFileFromDaemon(daemon daemon.Config, filePath string) (local 
 	defer util.ReturnErrOnPanic(&err)()
 
 	// Get the data
-	resp, err := http.Get(daemon.DaemonURL + "/" + daemon.Dataset + "/file/" + filePath)
+	url := daemon.DaemonURL + "/" + daemon.Dataset + "/file/" + filePath
+	log.Infof("Url: %v", url)
+	resp, err := http.Get(url)
 	util.PanicIfErr(err, "")
 	defer resp.Body.Close()
+	log.Infof("Status: %v", resp.Status)
+	log.Infof("ContentLength: %v", resp.ContentLength)
 
 	if env.ProcessConfigPath == env.DataVolumePath {
 		log.Fatalf("EnvironmentError: '%v' is not a valid value for ITERUM_CONFIG_PATH", env.ProcessConfigPath)
 	}
 	err = os.MkdirAll(env.ProcessConfigPath, os.ModePerm)
 	path := path.Join(env.ProcessConfigPath, filepath.Dir(filePath))
+
 	util.PanicIfErr(err, "")
 	out, err := os.Create(path)
 	util.PanicIfErr(err, "")
