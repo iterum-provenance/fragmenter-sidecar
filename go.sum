@@ -110,6 +110,8 @@ github.com/iterum-provenance/sidecar v0.2.5 h1:Muwoakiwl7W9g8e2pHMOAB8JTKAWMfMA6
 github.com/iterum-provenance/sidecar v0.2.5/go.mod h1:RxFig7GN06MbrBcj1huu+zuLSDwEkxXd3wbGg+Io23Y=
 github.com/iterum-provenance/sidecar v0.2.6 h1:KpPMH1Im50FtH2feSJbG2YykjiQ463GRm4/Az0Eg/pQ=
 github.com/iterum-provenance/sidecar v0.2.6/go.mod h1:GRKa6cZll+wmqj41L/moNqEt/HIpki7IsUt82rIei3Q=
+github.com/iterum-provenance/sidecar v0.2.8 h1:CfpxAzBQfZPhB0gYTrKcmI3X5a3BQl6gNIcxdRXU7Os=
+github.com/iterum-provenance/sidecar v0.2.8/go.mod h1:ipKjHZaW6UNbb0gx1ztNIVSj4HlpYxiJNkBalHmPbuc=
 github.com/iterum-provenance/sidecar v0.2.22 h1:0LQd8rhl6lhXkVBDFr4M3Cy3a70ZSURgdEQdRfawvZE=
 github.com/iterum-provenance/sidecar v0.2.22/go.mod h1:XCRkccbNk3/6zqJY3hdAIpbaYDNqPqiFmCo8BC4b3hw=
 github.com/joho/godotenv v1.3.0/go.mod h1:7hK45KPybAkOC6peb+G5yklZfMxEjkZhHbwpqxOKXbg=

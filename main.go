@@ -66,7 +66,7 @@ func main() {
 	util.Ensure(err, "MessageQueue sender succesfully created and listening")
 	mqSender.Start(&wg)
 
-	lineageTracker := lineage.NewTracker(envcomm.ProcessName, envcomm.ManagerURL, envcomm.PipelineHash, mqLineageBridge)
+	lineageTracker := lineage.NewMqTracker(envcomm.ProcessName, envcomm.PipelineHash, envcomm.MQBrokerURL, mqLineageBridge)
 	lineageTracker.Start(&wg)
 
 	// Send the files to the input handler
