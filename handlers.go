@@ -7,6 +7,7 @@ import (
 	"github.com/iterum-provenance/fragmenter/data"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/transmit"
+	"github.com/iterum-provenance/iterum-go/util"
 	"github.com/iterum-provenance/sidecar/socket"
 	"github.com/prometheus/common/log"
 )
@@ -77,8 +78,8 @@ func receiverHandler(socket socket.Socket, conn net.Conn) {
 		errKill := kill.Deserialize(encMsg)
 
 		if errKill != nil {
+			log.Errorf("Could not decode message due to '%v'", util.ReturnFirstErr(errFragment, errKill))
 			os.Exit(-1)
-			// log.Fatalf("Could not decode message due to '%v'", util.ReturnFirstErr(errFragment, errKill))
 		} else {
 			defer socket.Stop()
 			defer close(socket.Channel)

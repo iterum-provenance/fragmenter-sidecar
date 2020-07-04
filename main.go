@@ -16,6 +16,8 @@ import (
 )
 
 func main() {
+	// log.Base().SetLevel("Debug")
+
 	var wg sync.WaitGroup
 
 	// Initiate pipe to fragmenter channels
