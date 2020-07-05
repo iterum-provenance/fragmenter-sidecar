@@ -25,7 +25,7 @@ func NewDataMover(mc minio.Config, dc daemon.Config, files data.Filelist, comple
 // StartBlocking starts the process of pulling files from the daemon and storing them in minio
 func (dm DataMover) StartBlocking() {
 	var wg sync.WaitGroup
-	numWorkers := 5
+	numWorkers := 1
 
 	filesToUploadChannel := make(chan string, len(dm.Files))
 
@@ -35,7 +35,7 @@ func (dm DataMover) StartBlocking() {
 		go func(filesToUpload <-chan string, completions chan<- Upload) {
 			defer wg.Done()
 			for fileName := range filesToUpload {
-				remoteFile, err := pullAndUploadFile(dm.MinioConfig, dm.DaemonConfig, fileName, 5)
+				remoteFile, err := pullAndUploadFile(dm.MinioConfig, dm.DaemonConfig, fileName, 10)
 				if err != nil {
 					log.Fatalln(err)
 				}

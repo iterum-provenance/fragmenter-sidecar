@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
@@ -75,7 +76,16 @@ func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string
 		Name:      filepath.Dir(filePath),
 		LocalPath: filePath,
 	}
-	return minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
+	files, err := minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
+	for idx := 0; idx < retries && err != nil; idx++ {
+		// Get the data again. The stream/filehandle is removed after each attempt.
+		resp, err := http.Get(daemon.DaemonURL + "/" + daemon.Dataset + "/file/" + filePath)
+		util.PanicIfErr(err, "")
+
+		files, err = minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
+		time.Sleep(1 * time.Second)
+	}
+	return files, err
 }
 
 func downloadConfigFileFromDaemon(daemon daemon.Config, filePath string) (local desc.LocalFileDesc, err error) {
