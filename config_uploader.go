@@ -27,7 +27,7 @@ func NewConfigUploader(files []desc.LocalFileDesc, minio minio.Config) ConfigUpl
 func (cu *ConfigUploader) StartBlocking() {
 	log.Infof("Starting to upload %v fragmenter config files", len(cu.ToUpload))
 	wg := &sync.WaitGroup{}
-	// Start the downloading of each config file
+	// Start the uploading of each config file
 	for _, localFileDesc := range cu.ToUpload {
 		wg.Add(1)
 		go func(fdesc desc.LocalFileDesc) {

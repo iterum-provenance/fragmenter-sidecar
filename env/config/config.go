@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"path"
 
-	data "github.com/iterum-provenance/fragmenter/data"
+	"github.com/iterum-provenance/fragmenter/data"
 )
 
 // Config is the struct holding configurable information

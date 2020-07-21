@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	"github.com/iterum-provenance/iterum-go/minio"
+	"github.com/iterum-provenance/iterum-go/util"
 	"github.com/prometheus/common/log"
 )
 
@@ -25,11 +27,14 @@ func NewDataMover(mc minio.Config, dc daemon.Config, files data.Filelist, comple
 // StartBlocking starts the process of pulling files from the daemon and storing them in minio
 func (dm DataMover) StartBlocking() {
 	var wg sync.WaitGroup
-	numWorkers := 1
+	numWorkers := 50
 
 	filesToUploadChannel := make(chan string, len(dm.Files))
 
-	// Spawn 10 uploader workers
+	err := dm.MinioConfig.EnsureBucket(dm.MinioConfig.TargetBucket, 10)
+	util.Ensure(err, fmt.Sprintf("Output bucket '%v' was created successfully", dm.MinioConfig.TargetBucket))
+
+	// Spawn numWorkers uploader workers
 	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
 		go func(filesToUpload <-chan string, completions chan<- Upload) {

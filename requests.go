@@ -6,21 +6,20 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
 
+	"github.com/iterum-provenance/cli/idv"
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
-	"github.com/iterum-provenance/iterum-go/env"
 	"github.com/iterum-provenance/iterum-go/minio"
+	"github.com/iterum-provenance/iterum-go/process"
 	"github.com/iterum-provenance/iterum-go/util"
-	"github.com/prometheus/common/log"
-
-	"github.com/iterum-provenance/cli/idv"
 )
 
 var (
@@ -62,6 +61,7 @@ func getCommitFiles(config daemon.Config) (files data.Filelist, err error) {
 	return data.Filelist(commit.Files), err
 }
 
+// pullAndUploadFile downloads a file from the daemon and uploads it to the daemon
 func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string, retries int) (remoteFile desc.RemoteFileDesc, err error) {
 	defer util.ReturnErrOnPanic(&err)()
 	if !minio.IsConnected() {
@@ -76,14 +76,16 @@ func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string
 		Name:      filepath.Dir(filePath),
 		LocalPath: filePath,
 	}
-	files, err := minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
+	files, err := minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile, false)
 	for idx := 0; idx < retries && err != nil; idx++ {
 		// Get the data again. The stream/filehandle is removed after each attempt.
 		resp, err := http.Get(daemon.DaemonURL + "/" + daemon.Dataset + "/file/" + filePath)
 		util.PanicIfErr(err, "")
 
-		files, err = minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile)
-		time.Sleep(1 * time.Second)
+		files, err = minio.PutFileFromReader(resp.Body, resp.ContentLength, localFile, false)
+
+		// Sleep for a max of 2 seconds, and at least 1
+		time.Sleep(time.Duration(1000+rand.Intn(1000)) * time.Millisecond)
 	}
 	return files, err
 }
@@ -93,18 +95,13 @@ func downloadConfigFileFromDaemon(daemon daemon.Config, filePath string) (local 
 
 	// Get the data
 	url := daemon.DaemonURL + "/" + daemon.Dataset + "/file/" + filePath
-	log.Infof("Url: %v", url)
 	resp, err := http.Get(url)
 	util.PanicIfErr(err, "")
 	defer resp.Body.Close()
-	log.Infof("Status: %v", resp.Status)
-	log.Infof("ContentLength: %v", resp.ContentLength)
 
-	if env.ProcessConfigPath == env.DataVolumePath {
-		log.Fatalf("EnvironmentError: '%v' is not a valid value for ITERUM_CONFIG_PATH", env.ProcessConfigPath)
-	}
-	err = os.MkdirAll(env.ProcessConfigPath, os.ModePerm)
-	path := path.Join(env.ProcessConfigPath, filepath.Dir(filePath))
+	// Create location to save it
+	err = os.MkdirAll(process.ConfigPath, os.ModePerm)
+	path := path.Join(process.ConfigPath, filepath.Dir(filePath))
 
 	util.PanicIfErr(err, "")
 	out, err := os.Create(path)
@@ -114,6 +111,7 @@ func downloadConfigFileFromDaemon(daemon daemon.Config, filePath string) (local 
 	_, err = io.Copy(out, resp.Body)
 	util.PanicIfErr(err, "")
 
+	// return a local file description describing the downloaded file
 	return desc.LocalFileDesc{
 		Name:      filepath.Dir(filePath),
 		LocalPath: path,

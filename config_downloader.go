@@ -68,7 +68,7 @@ func (cd *ConfigDownloader) StartBlocking() {
 	}
 	log.Infof("Finishing up ConfigDownloader")
 
-	// Start uploading the config files to minio concurrently as well
+	// Start uploading the config files of other transformations to minio concurrently as well
 	cfgUploader := NewConfigUploader(configFiles, cd.MinioConfig)
 	cfgUploader.Start(wg)
 	wg.Wait()

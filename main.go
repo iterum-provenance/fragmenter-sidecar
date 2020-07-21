@@ -2,77 +2,88 @@ package main
 
 import (
 	"sync"
+	"time"
 
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/fragmenter/env"
 	"github.com/iterum-provenance/iterum-go/daemon"
-	envcomm "github.com/iterum-provenance/iterum-go/env"
 	"github.com/iterum-provenance/iterum-go/minio"
+	"github.com/iterum-provenance/iterum-go/process"
 	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/iterum-go/util"
 	"github.com/iterum-provenance/sidecar/lineage"
-	"github.com/iterum-provenance/sidecar/messageq"
+	mq "github.com/iterum-provenance/sidecar/messageq"
 	"github.com/iterum-provenance/sidecar/socket"
+	"github.com/prometheus/common/log"
 )
 
 func main() {
 	// log.Base().SetLevel("Debug")
-
+	startTime := time.Now()
 	var wg sync.WaitGroup
 
-	// Initiate pipe to fragmenter channels
-	fragmenterBufferSize := 10
-	toFragmenterChannel := make(chan transmit.Serializable, 1)
-	fromFragmenterChannel := make(chan transmit.Serializable, fragmenterBufferSize)
-	toFragmenterSocket := env.FragmenterInputSocket
-	fromFragmenterSocket := env.FragmenterOutputSocket
+	// We are going to send 1 message to the fragmenter containing commit files
+	sidecarFragmenterBridge := make(chan transmit.Serializable, 1)
 
-	// Start pipe to fragmenter
-	pipe := socket.NewPipe(fromFragmenterSocket, toFragmenterSocket,
-		fromFragmenterChannel, toFragmenterChannel,
-		receiverHandler, senderHandler)
-	pipe.Start(&wg)
+	// For each file moved from daemon to minio a message is send to the tracker
+	moverTrackerBridgeBufferSize := 10
+	moverTrackerBridge := make(chan Upload, moverTrackerBridgeBufferSize)
 
-	// Define and connect to minio storage and configure for remote Daemon
-	daemonConfig := daemon.NewDaemonConfigFromEnv()
-	minioConfig, err := minio.NewMinioConfigFromEnv()
-	util.PanicIfErr(err, "")
-	err = minioConfig.Connect()
-	util.PanicIfErr(err, "")
+	// For each completely uploaded fragment the tracker notifies the mqSender to post this fragment
+	trackerMQBridgeBufferSize := 10
+	trackerMQBridge := make(chan transmit.Serializable, trackerMQBridgeBufferSize)
 
-	// Get the target commit
-	files, err := getCommitFiles(daemonConfig)
-	util.PanicIfErr(err, "")
+	// For each subfragment coming from the fragmenter the `pipe` notifies the tracker of with this new fragment
+	fragmenterTrackerBridgeBufferSize := 10
+	fragmenterTrackerBridge := make(chan transmit.Serializable, fragmenterTrackerBridgeBufferSize)
 
-	// Download config and then send the file list to the fragmenter
-	configDownloader := NewConfigDownloader(files, env.Config, daemonConfig, minioConfig)
-	configDownloader.Start(&wg)
-
-	uploadedBufferSize := len(files)
-	uploaded := make(chan Upload, uploadedBufferSize)
-
-	toMQBufferSize := len(files)
-	toMQChannel := make(chan transmit.Serializable, toMQBufferSize)
-
+	// For each uploaded fragment its lineage is tracked
 	mqLineageBridgeBufferSize := 10
 	mqLineageBridge := make(chan transmit.Serializable, mqLineageBridgeBufferSize)
 
-	// Start downloading files from daemon and upload them to minio
-	dataMover := NewDataMover(minioConfig, daemonConfig, files, uploaded)
+	// Define and connect to minio storage and configure for remote Daemon
+	daemonConfig := daemon.NewDaemonConfigFromEnv()
+	minioConfig := minio.NewMinioConfigFromEnv()
+	err := minioConfig.Connect()
+	util.PanicIfErr(err, "")
+
+	// Get the target data commit
+	files, err := getCommitFiles(daemonConfig)
+	util.PanicIfErr(err, "")
+
+	// Download all config (files) and upload config of other transformations to minio
+	configDownloader := NewConfigDownloader(files, env.Config, daemonConfig, minioConfig)
+	configDownloader.Start(&wg)
+
+	// Downloads files from daemon and upload them to minio
+	dataMover := NewDataMover(minioConfig, daemonConfig, files, moverTrackerBridge)
 	dataMover.Start(&wg)
 
-	tracker := NewTracker(uploaded, fromFragmenterChannel, toMQChannel, files)
+	// Connection between the fragmenter and the fragmenter-sidecar
+	toFragmenterSocket := env.FragmenterInputSocket
+	fromFragmenterSocket := env.FragmenterOutputSocket
+	pipe := socket.NewPipe(fromFragmenterSocket, toFragmenterSocket,
+		fragmenterTrackerBridge, sidecarFragmenterBridge,
+		receiverHandler, senderHandler)
+	pipe.Start(&wg)
+
+	// Track each fragment description from the fragmenter and each file uploaded.
+	// Once all files of a fragment are uploaded send it to the mqSender
+	tracker := NewTracker(moverTrackerBridge, fragmenterTrackerBridge, trackerMQBridge, files)
 	tracker.Start(&wg)
 
-	mqSender, err := messageq.NewSender(toMQChannel, mqLineageBridge, envcomm.MQBrokerURL, envcomm.MQOutputQueue)
-	util.Ensure(err, "MessageQueue sender succesfully created and listening")
+	// Publish completely uploaded fragment descriptions
+	mqSender, err := mq.NewSender(trackerMQBridge, mqLineageBridge, mq.BrokerURL, mq.OutputQueue)
+	util.Ensure(err, "MessageQueue sender succesfully created")
 	mqSender.Start(&wg)
 
-	lineageTracker := lineage.NewMqTracker(envcomm.ProcessName, envcomm.PipelineHash, envcomm.MQBrokerURL, mqLineageBridge)
+	// Track provenance information for each fragment published to the MQ by the mqSender
+	lineageTracker := lineage.NewMqTracker(process.Name, process.PipelineHash, mq.BrokerURL, mqLineageBridge)
 	lineageTracker.Start(&wg)
 
-	// Send the files to the input handler
+	// Send the file list to the fragmenter
 	pipe.ToTarget <- &data.FragmenterInput{DataFiles: files}
 
 	wg.Wait()
+	log.Infof("Ran for %v", time.Now().Sub(startTime))
 }

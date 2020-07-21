@@ -2,11 +2,13 @@ package env
 
 import (
 	"os"
+	"path"
 	"strings"
 
 	"github.com/prometheus/common/log"
 
 	"github.com/iterum-provenance/iterum-go/env"
+	"github.com/iterum-provenance/iterum-go/process"
 	"github.com/iterum-provenance/iterum-go/util"
 
 	"github.com/iterum-provenance/fragmenter/env/config"
@@ -18,10 +20,10 @@ const (
 )
 
 // FragmenterInputSocket is the path to the socket used for fragmenter input
-var FragmenterInputSocket = env.DataVolumePath + "/" + os.Getenv(inputSocketEnv)
+var FragmenterInputSocket = path.Join(process.DataVolumePath, os.Getenv(inputSocketEnv))
 
 // FragmenterOutputSocket is the path to the socket used for fragmenter output
-var FragmenterOutputSocket = env.DataVolumePath + "/" + os.Getenv(outputSocketEnv)
+var FragmenterOutputSocket = path.Join(process.DataVolumePath, os.Getenv(outputSocketEnv))
 
 // Config , if it exists, contains additional configuration information for the fragmenter-sidecar
 var Config *config.Config = nil
@@ -38,28 +40,20 @@ func VerifyFragmenterSidecarEnvs() error {
 
 // VerifyFragmenterSidecarConfig verifies the config struct of the fragmenter sidecar
 func VerifyFragmenterSidecarConfig() error {
-	if env.ProcessConfig == "" {
-		log.Warnln("Fragmenter-sidecar was initialized without additional config, make sure that this was intended")
-	} else {
-		c := config.Config{}
-		errConfig := c.FromString(env.ProcessConfig)
-		if errConfig != nil {
-			return errConfig
-		}
-		Config = &c
+	c := config.Config{}
+	errConfig := c.FromString(process.Config)
+	if errConfig != nil {
+		return errConfig
 	}
+	Config = &c
 	return nil
 }
 
 func init() {
-	errIterum := env.VerifyIterumEnvs()
-	errDaemon := env.VerifyDaemonEnvs()
-	errMinio := env.VerifyMinioEnvs()
-	errMessageq := env.VerifyMessageQueueEnvs()
 	errSidecar := VerifyFragmenterSidecarEnvs()
 	errSidecarConf := VerifyFragmenterSidecarConfig()
 
-	err := util.ReturnFirstErr(errIterum, errMinio, errMessageq, errDaemon, errSidecar, errSidecarConf)
+	err := util.ReturnFirstErr(errSidecar, errSidecarConf)
 	if err != nil {
 		log.Fatalln(err)
 	}
