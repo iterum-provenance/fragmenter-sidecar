@@ -19,6 +19,7 @@ import (
 
 func main() {
 	// log.Base().SetLevel("Debug")
+	// log.Base().SetLevel("Info")
 	startTime := time.Now()
 	var wg sync.WaitGroup
 
