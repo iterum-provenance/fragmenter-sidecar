@@ -1,31 +1,32 @@
-package main
+package config
 
 import (
 	"sync"
 
+	"github.com/prometheus/common/log"
+
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/minio"
-	"github.com/prometheus/common/log"
 )
 
-// ConfigUploader is the structure responsible for uploading
+// FUploader is the structure responsible for uploading
 // all files marked as config files to minio
-type ConfigUploader struct {
+type FUploader struct {
 	ToUpload    []desc.LocalFileDesc
 	MinioConfig minio.Config
 }
 
-// NewConfigUploader instantiates a new config downloader without starting it
-func NewConfigUploader(files []desc.LocalFileDesc, minio minio.Config) ConfigUploader {
-	return ConfigUploader{
+// NewFUploader instantiates a new config downloader without starting it
+func NewFUploader(files []desc.LocalFileDesc, minio minio.Config) FUploader {
+	return FUploader{
 		ToUpload:    files,
 		MinioConfig: minio,
 	}
 }
 
 // StartBlocking starts the process of uploading the config files
-func (cu *ConfigUploader) StartBlocking() {
-	log.Infof("Starting to upload %v fragmenter config files", len(cu.ToUpload))
+func (cu *FUploader) StartBlocking() {
+	log.Infof("Starting to upload %v config files", len(cu.ToUpload))
 	wg := &sync.WaitGroup{}
 	// Start the uploading of each config file
 	for _, localFileDesc := range cu.ToUpload {
@@ -44,7 +45,7 @@ func (cu *ConfigUploader) StartBlocking() {
 }
 
 // Start is an asyncrhonous alternative to StartBlocking by spawning a goroutine
-func (cu *ConfigUploader) Start(wg *sync.WaitGroup) {
+func (cu *FUploader) Start(wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

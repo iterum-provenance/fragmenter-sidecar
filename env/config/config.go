@@ -3,8 +3,6 @@ package config
 import (
 	"encoding/json"
 	"path"
-
-	"github.com/iterum-provenance/fragmenter/data"
 )
 
 // Config is the struct holding configurable information
@@ -30,8 +28,8 @@ func (conf Config) Validate() error {
 }
 
 // ReturnMatchingFiles returns the list of files matching the ConfigSelectors of conf
-func (conf Config) ReturnMatchingFiles(commitFiles data.Filelist) (matches data.Filelist) {
-	matches = data.Filelist([]string{})
+func (conf Config) ReturnMatchingFiles(commitFiles []string) (matches []string) {
+	matches = []string{}
 
 	if len(commitFiles) == 0 {
 		return matches

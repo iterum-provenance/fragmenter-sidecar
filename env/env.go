@@ -1,3 +1,7 @@
+// Package env contains setup for important environment variables used by the fragmenter-sidecar.
+// Thanks to the init function the usage of these environment variables is checked before they are used
+// this ensures that if any of these have an invalid value the applications will crash immediately at the
+// start of execution.
 package env
 
 import (

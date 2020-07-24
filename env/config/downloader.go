@@ -1,31 +1,30 @@
-package main
+package config
 
 import (
 	"sync"
 
-	"github.com/iterum-provenance/fragmenter/data"
-	"github.com/iterum-provenance/fragmenter/env/config"
+	"github.com/prometheus/common/log"
+
 	"github.com/iterum-provenance/iterum-go/daemon"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/minio"
-	"github.com/prometheus/common/log"
 )
 
-// ConfigDownloader is the structure responsible for downloading
-// the config files used by the fragmenter to properly fragment data files
-type ConfigDownloader struct {
-	AllFiles     data.Filelist
-	Config       *config.Config
+// FDownloader is the structure responsible for downloading
+// the config files used by the fragmenter and other transformations as well
+type FDownloader struct {
+	AllFiles     []string
+	Config       *Config
 	DaemonConfig daemon.Config
 	MinioConfig  minio.Config
 	finished     chan desc.LocalFileDesc
 }
 
-// NewConfigDownloader instantiates a new config downloader without starting it
-func NewConfigDownloader(files data.Filelist, config *config.Config,
-	daemon daemon.Config, minio minio.Config) ConfigDownloader {
+// NewFDownloader instantiates a new config downloader without starting it
+func NewFDownloader(files []string, config *Config,
+	daemon daemon.Config, minio minio.Config) FDownloader {
 
-	return ConfigDownloader{
+	return FDownloader{
 		AllFiles:     files,
 		Config:       config,
 		DaemonConfig: daemon,
@@ -35,14 +34,14 @@ func NewConfigDownloader(files data.Filelist, config *config.Config,
 }
 
 // StartBlocking starts the process of downloading the config files
-func (cd *ConfigDownloader) StartBlocking() {
-	toDownload := data.Filelist([]string{})
+func (cd *FDownloader) StartBlocking() {
+	toDownload := []string{}
 	if cd.Config != nil {
 		toDownload = cd.Config.ReturnMatchingFiles(cd.AllFiles)
 		cd.finished = make(chan desc.LocalFileDesc, len(toDownload))
 	}
 
-	log.Infof("Starting to dowload %v fragmenter config files", len(toDownload))
+	log.Infof("Starting to download %v config files", len(toDownload))
 	wg := &sync.WaitGroup{}
 	// Start the downloading of each config file
 	for _, file := range toDownload {
@@ -50,7 +49,7 @@ func (cd *ConfigDownloader) StartBlocking() {
 		go func(f string) {
 			fileDesc, err := downloadConfigFileFromDaemon(cd.DaemonConfig, f)
 			if err != nil {
-				log.Fatalf("Could not download fragmenter config file due to '%v'", err)
+				log.Fatalf("Could not download config file due to '%v'", err)
 			}
 			cd.finished <- fileDesc
 			wg.Done()
@@ -59,23 +58,23 @@ func (cd *ConfigDownloader) StartBlocking() {
 	// Wait for the downloading to finish
 	wg.Wait()
 	close(cd.finished)
-	log.Infof("Finished downloading fragmenter config files")
+	log.Infof("Finished downloading config files")
 
 	configFiles := []desc.LocalFileDesc{}
 	// Channel cd.finished is already closed so loop will terminate once all messages are processed
 	for fileDesc := range cd.finished {
 		configFiles = append(configFiles, fileDesc)
 	}
-	log.Infof("Finishing up ConfigDownloader")
+	log.Infof("Finishing up config.FDownloader")
 
 	// Start uploading the config files of other transformations to minio concurrently as well
-	cfgUploader := NewConfigUploader(configFiles, cd.MinioConfig)
+	cfgUploader := NewFUploader(configFiles, cd.MinioConfig)
 	cfgUploader.Start(wg)
 	wg.Wait()
 }
 
 // Start is an asyncrhonous alternative to StartBlocking by spawning a goroutine
-func (cd *ConfigDownloader) Start(wg *sync.WaitGroup) {
+func (cd *FDownloader) Start(wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

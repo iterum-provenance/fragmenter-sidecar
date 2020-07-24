@@ -1,4 +1,4 @@
-package data
+package handler
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 
 // FragmenterInput is the message format sent from the sidecar to the fragmenter
 type FragmenterInput struct {
-	DataFiles Filelist `json:"data_files"`
+	DataFiles []string `json:"data_files"`
 }
 
 // Serialize tries to transform `fi` into a json encoded bytearray. Errors on failure

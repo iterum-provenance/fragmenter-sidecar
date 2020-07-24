@@ -1,21 +1,13 @@
-package main
+package data
 
 import (
 	"sync"
 
 	"github.com/prometheus/common/log"
 
-	"github.com/iterum-provenance/fragmenter/data"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
 	"github.com/iterum-provenance/iterum-go/transmit"
 )
-
-// Upload is a struct mapping an idv file name/path
-// to a remote file description as it is stored in minio
-type Upload struct {
-	File     string
-	FileDesc desc.RemoteFileDesc
-}
 
 // UploadMap maps files to their remote file description
 // If a file is in here it means it was uploaded to minio
@@ -23,13 +15,13 @@ type UploadMap map[string]desc.RemoteFileDesc
 
 // FragmentMap maps files to a list of fragmenter-sidecar internal fragments (a list of files)
 // Meaning that an idv file name/path maps to a list of fragments its used in
-type FragmentMap map[string][]data.Subfragment
+type FragmentMap map[string][]Subfragment
 
 // Tracker is a type used to monitor which fragments and files are uploaded and can start to be processed
 type Tracker struct {
-	Files          data.Filelist
-	Uploaded       chan Upload
-	Fragmented     chan transmit.Serializable // data.Filelist
+	Files          []string
+	Uploaded       chan transmit.Serializable // Upload
+	Fragmented     chan transmit.Serializable // Subfragment
 	Completed      chan transmit.Serializable // desc.RemoteFragmentDesc
 	fragments      FragmentMap
 	uploads        UploadMap
@@ -37,7 +29,7 @@ type Tracker struct {
 }
 
 // NewTracker instantiates a new tracker and attaches itself to the passed channels
-func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmit.Serializable, allFiles data.Filelist) Tracker {
+func NewTracker(uploaded, fragmented, completedFragment chan transmit.Serializable, allFiles []string) Tracker {
 	tracker := Tracker{
 		allFiles,
 		uploaded,
@@ -50,13 +42,13 @@ func NewTracker(uploaded chan Upload, fragmented, completedFragment chan transmi
 
 	// Initialize each file to be attached to no fragments (yet)
 	for _, file := range tracker.Files {
-		tracker.fragments[file] = []data.Subfragment{}
+		tracker.fragments[file] = []Subfragment{}
 	}
 	return tracker
 }
 
 // IsUploaded checks whether a subfragment is completely uploaded to Minio
-func (t Tracker) IsUploaded(fragment data.Subfragment) bool {
+func (t Tracker) IsUploaded(fragment Subfragment) bool {
 	for _, file := range fragment.Files {
 		if _, ok := t.uploads[file]; !ok {
 			return false
@@ -67,7 +59,7 @@ func (t Tracker) IsUploaded(fragment data.Subfragment) bool {
 
 // toRemoteFragmentDesc transforms a fully uploaded subfragment into a RemoteFragmentDesc
 // This can be posted on the MQPublisher. It does a fatal log if any of the files is not yet uploaded
-func (t Tracker) toRemoteFragmentDesc(fragment data.Subfragment) desc.RemoteFragmentDesc {
+func (t Tracker) toRemoteFragmentDesc(fragment Subfragment) desc.RemoteFragmentDesc {
 	fragmentDesc := desc.RemoteFragmentDesc{
 		Metadata: desc.RemoteMetadata{
 			FragmentID:   desc.NewIterumID(),
@@ -108,7 +100,8 @@ func (t *Tracker) processFileUpload(upload Upload) {
 	}
 }
 
-func (t *Tracker) processFragmentDescription(fragment data.Subfragment) {
+// processFragmentDescription
+func (t *Tracker) processFragmentDescription(fragment Subfragment) {
 	// Add this fragment to the list of fragments of each file
 	for _, file := range fragment.Files {
 		if _, ok := t.fragments[file]; !ok {
@@ -116,7 +109,7 @@ func (t *Tracker) processFragmentDescription(fragment data.Subfragment) {
 		}
 		t.fragments[file] = append(t.fragments[file], fragment)
 	}
-	// If this fragment is already complete: publish it, **for strict ordering reason see same if in processFileUpload**
+	// If this fragment is already complete: publish it, **for strict ordering reason see same structure in processFileUpload**
 	if !t.strictOrdering && t.IsUploaded(fragment) {
 		fragmentDesc := t.toRemoteFragmentDesc(fragment)
 		t.Completed <- &fragmentDesc
@@ -129,16 +122,17 @@ func (t *Tracker) processFragmentDescription(fragment data.Subfragment) {
 func (t Tracker) StartBlocking() {
 	defer close(t.Completed)
 	// strictOrdering variables
-	orderedFragments := []data.Subfragment{}
+	orderedFragments := []Subfragment{}
 
 	for t.Uploaded != nil || t.Fragmented != nil {
 		select {
-		case upload, ok := <-t.Uploaded: // On file uploaded to minio
+		case uploadmsg, ok := <-t.Uploaded: // On file uploaded to minio
 			if !ok {
 				log.Infoln("Uploaded all files")
 				t.Uploaded = nil
 				break
 			}
+			upload := *(uploadmsg.(*Upload))
 			t.processFileUpload(upload)
 		case fragmentptr, ok := <-t.Fragmented: // On fragment returned from fragmenter
 			if !ok {
@@ -146,7 +140,7 @@ func (t Tracker) StartBlocking() {
 				t.Fragmented = nil
 				break
 			}
-			fragment := *fragmentptr.(*data.Subfragment)
+			fragment := *fragmentptr.(*Subfragment)
 			t.processFragmentDescription(fragment)
 			if t.strictOrdering {
 				orderedFragments = append(orderedFragments, fragment)
