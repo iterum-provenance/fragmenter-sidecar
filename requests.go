@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/iterum-provenance/cli/idv"
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/iterum-go/daemon"
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
@@ -56,12 +55,19 @@ func _get(url string, target interface{}) (err error) {
 // getCommitFiles pulls a specific commmit based on its hash and dataset and passed daemonURL
 // it returns the list of files associated with this commmit
 func getCommitFiles(config daemon.Config) (files data.Filelist, err error) {
-	commit := idv.Commit{}
+	commit := struct {
+		Parent      string   `json:"parent"`
+		Branch      string   `json:"branch"`
+		Hash        string   `json:"hash"`
+		Name        string   `json:"name"`
+		Description string   `json:"description"`
+		Files       []string `json:"files"`
+	}{}
 	err = _get(config.DaemonURL+"/"+config.Dataset+"/commit/"+config.CommitHash, &commit)
 	return data.Filelist(commit.Files), err
 }
 
-// pullAndUploadFile downloads a file from the daemon and uploads it to the daemon
+// pullAndUploadFile downloads a file from the daemon and uploads it to minio
 func pullAndUploadFile(minio minio.Config, daemon daemon.Config, filePath string, retries int) (remoteFile desc.RemoteFileDesc, err error) {
 	defer util.ReturnErrOnPanic(&err)()
 	if !minio.IsConnected() {

@@ -4,12 +4,14 @@ import (
 	"net"
 	"os"
 
-	"github.com/iterum-provenance/fragmenter/data"
+	"github.com/prometheus/common/log"
+
 	desc "github.com/iterum-provenance/iterum-go/descriptors"
+	"github.com/iterum-provenance/iterum-go/socket"
 	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/iterum-go/util"
-	"github.com/iterum-provenance/sidecar/socket"
-	"github.com/prometheus/common/log"
+
+	"github.com/iterum-provenance/fragmenter/data"
 )
 
 // senderHandler is a handler function for a socket that sends files to the fragmenter

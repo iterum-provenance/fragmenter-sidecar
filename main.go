@@ -7,13 +7,13 @@ import (
 	"github.com/iterum-provenance/fragmenter/data"
 	"github.com/iterum-provenance/fragmenter/env"
 	"github.com/iterum-provenance/iterum-go/daemon"
+	"github.com/iterum-provenance/iterum-go/lineage"
+	mq "github.com/iterum-provenance/iterum-go/messageq"
 	"github.com/iterum-provenance/iterum-go/minio"
 	"github.com/iterum-provenance/iterum-go/process"
+	"github.com/iterum-provenance/iterum-go/socket"
 	"github.com/iterum-provenance/iterum-go/transmit"
 	"github.com/iterum-provenance/iterum-go/util"
-	"github.com/iterum-provenance/sidecar/lineage"
-	mq "github.com/iterum-provenance/sidecar/messageq"
-	"github.com/iterum-provenance/sidecar/socket"
 	"github.com/prometheus/common/log"
 )
 
